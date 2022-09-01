@@ -15,22 +15,23 @@ We also present a characterization study of the trace in a paper, ["MLaaS in the
 }
 ```
 
-**Table of Contents**
+## Table of Contents
 
 - [1 Introduction](#1-introduction)
-- [2 Data Files in the Trace](#2-data-files-in-the-trace)
-  - [pai_job_table](#pai_job_table)
-  - [pai_task_table](#pai_task_table)
-  - [pai_instance_table](#pai_instance_table)
-  - [pai_sensor_table](#pai_sensor_table)
-  - [pai_group_tag_table](#pai_group_tag_table)
-  - [pai_machine_spec](#pai_machine_spec)
-  - [pai_machine_metric](#pai_machine_metric)
-- [3 Demo of Data Analysis](#3-demo-of-data-analysis)
+  - [Table of Contents](#table-of-contents)
+  - [2 Data Files in the Trace](#2-data-files-in-the-trace)
+  - [Size of file](#size-of-file)
+  - [Usage](#usage)
+  - [`pai_job_table`](#pai_job_table)
+  - [`pai_task_table`](#pai_task_table)
+  - [`pai_instance_table`](#pai_instance_table)
+  - [`pai_sensor_table`](#pai_sensor_table)
+  - [`pai_group_tag_table`](#pai_group_tag_table)
+  - [`pai_machine_spec`](#pai_machine_spec)
+  - [`pai_machine_metric`](#pai_machine_metric)
+  - [3 Demo of Data Analysis](#3-demo-of-data-analysis)
 
-
-# 2 Data Files in the Trace
-
+## 2 Data Files in the Trace
 
 ![pai-overview](./figures/pai-overview.png)
 
@@ -49,8 +50,8 @@ Below is a brief description of all the tables; the details are deferred to thei
 
 (**Note**: the data in `./data` folder, due to its large volume, is encouraged to be downloaded via [Git LFS](https://git-lfs.github.com/))
 
-
 **Checksum** (replacing `sha256sum` with `shasum` for macOS users)
+
 ```bash
 $sha256sum -c << EOF
 722fef30b7fb7aa50dabd79155614b5423a9d65cf45a9b26c590d57725423a14  pai_group_tag_table.tar.gz
@@ -70,7 +71,8 @@ d3e26eb31fb3b833821373b487266312151a3bfb2f18fc62017a438546cc1362  pai_sensor_tab
 EOF
 ```
 
-**Size of file**
+## Size of file
+
 ```bash
 $ls -sh1 *.tar.gz
  53M pai_group_tag_table.tar.gz
@@ -82,7 +84,8 @@ $ls -sh1 *.tar.gz
  34M pai_task_table.tar.gz
 ```
 
-**Usage**
+## Usage
+
 ```bash
 $for file in `ls *.tar.gz`; do tar -xzf $file; done
 $sha256sum -c << EOF
@@ -96,7 +99,8 @@ b179f7d7e0927a6663d719b728c92640447c5a0fc3c6e4edff31e7207ab9dd17  pai_instance_t
 EOF
 ```
 
-## pai_job_table
+## `pai_job_table`
+
 **job launch information.**
 
 | Columns    | Example Entry                                                |
@@ -117,9 +121,7 @@ EOF
 
 **Note of `time`**: Both `start_time` and `end_time` are in *seconds* and have been deducted by a constant number for desensitization. Still, if translated to Unix time in UTC+8 timezone ("Asia/Shanghai"), they will have the same time of the day (e.g., "08:59:59 UTC+8") and the same day of the week (e.g., "Sunday") as the original traces, while having fake dates, months, and years.
 
-
-
-## pai_task_table
+## `pai_task_table`
 
 **task launch information.**
 
@@ -147,9 +149,7 @@ EOF
 - `plan_gpu`: number of GPUs requested in percentage (i.e., 50.0 is 50% GPU).
 - `gpu_type`: type of GPUs assigned to this task. `MISC` is short for "miscellaneous", indicating GPUs of older generations, e.g., NVIDIA Tesla K40m, K80, M60.
 
-
-
-## pai_instance_table
+## `pai_instance_table`
 
 **instance launch information.**
 
@@ -174,9 +174,7 @@ EOF
 - `end_time`: timestamp of instance completion time.
 - `machine`: the name of machine that the instance resides on, to be joined with `machine` in [pai_machine_spec](##pai_machine_spec) and [pai_machine_metric](#pai_machine_metric).
 
-
-
-## pai_sensor_table
+## `pai_sensor_table`
 
 **instance resource sensor information.**
 
@@ -218,9 +216,7 @@ EOF
 
 **Note of `sensor`**: all the sensor metrics (CPU, GPU, Memory, I/O) in this table are collected for each *instance* (indexed by  `worker_name`) but *not task*, taking the average of all data in the instance's lifetime (except for `max_mem` and `max_gpu_wrk_mem` being the maximum).
 
-
-
-## pai_group_tag_table
+## `pai_group_tag_table`
 
 **instance semantic information.**
 
@@ -238,9 +234,7 @@ EOF
 - `group`: a semantic tag that indicates some instances have similar customized inputs, e.g., entry scripts, command-line parameters, data sources and sinks; consequently, instances with the same group tag are considered as repeated instances. Please refer to the trace analysis paper for detailed discussion.
 - `workload`: we study some Deep Learning tasks by investigating their customized inputs (mentioned above) and record their workload in this field; around 9% instances have this tag, including `graphlearn`, `ctr`, `bert`, etc.
 
-
-
-## pai_machine_spec
+## `pai_machine_spec`
 
 **machine specification.**
 
@@ -258,9 +252,7 @@ EOF
 - `cap_mem`: memory capacity; GB of main memory capacity in the machine.
 - `cap_gpu`: GPU capacity; number of GPU in the machine.
 
-
-
-## pai_machine_metric
+## `pai_machine_metric`
 
 **machine resource metrics with respect to the instance.**
 
@@ -294,9 +286,7 @@ EOF
 
 **Note of `machine_` metrics**: these metrics are machine-level metrics, taking average of the sensor data during the instance's (indexed by `worker_name`) lifetime.
 
-
-
-# 3 Demo of Data Analysis
+## 3 Demo of Data Analysis
 
 The displayed [Jupyter notebook](./analysis/analysis.ipynb) and the underlying [utility script](./analysis/utils.py) can be found under the [analysis](./analysis) directory.
 
@@ -307,4 +297,3 @@ The displayed [Jupyter notebook](./analysis/analysis.ipynb) and the underlying [
 ![analysis-05.png](./figures/analysis-05.png)
 ![analysis-06.png](./figures/analysis-06.png)
 ![analysis-07.png](./figures/analysis-07.png)
-
