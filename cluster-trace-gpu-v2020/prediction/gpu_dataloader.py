@@ -17,6 +17,9 @@ class GPUDataset(Dataset):
         feature_columns: list = None,
         label_columns: list = None
     ) -> None:
+        
+        self.standard_scaler = StandardScaler()
+        self.minmax_scaler = MinMaxScaler()
 
         self.X, self.y = self.__prepare_dataset(
             data_path, data_index)
@@ -134,11 +137,8 @@ class GPUDataset(Dataset):
         return X_df, y_df
 
     def __scale_dfs(self, X_df: pd.DataFrame, y_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        standard_scaler = StandardScaler()
-        minmax_scaler = MinMaxScaler()
-
-        X_ss = pd.DataFrame(standard_scaler.fit_transform(X_df))
-        y_mm = pd.DataFrame(minmax_scaler.fit_transform(y_df))
+        X_ss = pd.DataFrame(self.standard_scaler.fit_transform(X_df))
+        y_mm = pd.DataFrame(self.minmax_scaler.fit_transform(y_df))
 
         return X_ss, y_mm
 
