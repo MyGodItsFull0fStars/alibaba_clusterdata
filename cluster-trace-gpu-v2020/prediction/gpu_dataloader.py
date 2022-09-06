@@ -58,6 +58,7 @@ class GPUDataset(Dataset):
         # Drop Unused Columns
         drop_columns = self.__prepare_drop_columns(drop_columns)
         df.drop(columns=drop_columns, inplace=True)
+        df.dropna(axis=0, inplace=True)
 
         df.sort_index(inplace=True)
 
@@ -93,12 +94,13 @@ class GPUDataset(Dataset):
     def _get_all_machines(self, df: pd.DataFrame) -> np.ndarray:
         return df.machine.unique()
 
-    def __append_to_feature_and_label_set(self, df: pd.DataFrame, batch_size: int = 500):
+    def __append_to_feature_and_label_set(self, df: pd.DataFrame, batch_size: int = 1000):
         X_df = pd.DataFrame()
         y_df = pd.DataFrame()
 
+        df = df.iloc[0:1200000]
         # df = df.iloc[0:1954000]
-        df = df.iloc[0:5000]
+        # df = df.iloc[0:5000]
 
         for step in range(0, len(df) // batch_size, 2):
 
