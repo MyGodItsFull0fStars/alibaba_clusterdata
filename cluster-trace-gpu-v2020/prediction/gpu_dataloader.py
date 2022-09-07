@@ -12,14 +12,20 @@ class GPUDataset(Dataset):
 
     def __init__(
         self,
-        data_path: str = None,
-        data_index: str = None,
+        data_path: str = 'training_df.csv',
+        data_index: str = 'start_date',
         feature_columns: list = None,
-        label_columns: list = None
+        label_columns: list = None,
+        batch_size: int = 1000,
+        small_df: bool = False
     ) -> None:
-        
+
+        # scalers kept as members, since they are also used to invert the transformation
         self.standard_scaler = StandardScaler()
         self.minmax_scaler = MinMaxScaler()
+
+        self.batch_size = batch_size
+        self.small_df = small_df
 
         self.X, self.y = self.__prepare_dataset(
             data_path, data_index)
@@ -55,15 +61,15 @@ class GPUDataset(Dataset):
         df.set_index(data_index)
 
         # One-Hot Encoding
-        dummies = pd.get_dummies(df.task_name)
-        df = df.join(dummies)
+        # dummies = pd.get_dummies(df.task_name)
+        # df = df.join(dummies)
 
         # Drop Unused Columns
-        drop_columns = self.__prepare_drop_columns(drop_columns)
-        df.drop(columns=drop_columns, inplace=True)
-        df.dropna(axis=0, inplace=True)
+        # drop_columns = self.__prepare_drop_columns(drop_columns)
+        # df.drop(columns=drop_columns, inplace=True)
+        # df.dropna(axis=0, inplace=True)
 
-        df.sort_index(inplace=True)
+        # df.sort_index(inplace=True)
 
         return self.__append_to_feature_and_label_set(df)
 
@@ -75,7 +81,7 @@ class GPUDataset(Dataset):
 
     def __prepare_data_path(self, data_path: str) -> str:
         if data_path is None or len(data_path) == 0:
-            data_path = 'training_machine_sorted_df.csv'
+            data_path = 'machine_sorted_df.csv'
         return data_path
 
     def __prepare_data_index(self, data_index) -> str:
@@ -97,21 +103,22 @@ class GPUDataset(Dataset):
     def _get_all_machines(self, df: pd.DataFrame) -> np.ndarray:
         return df.machine.unique()
 
-    def __append_to_feature_and_label_set(self, df: pd.DataFrame, batch_size: int = 1000):
+    def __append_to_feature_and_label_set(self, df: pd.DataFrame):
         X_df = pd.DataFrame()
         y_df = pd.DataFrame()
 
-        df = df.iloc[0:1200000]
         # df = df.iloc[0:1954000]
-        # df = df.iloc[0:5000]
 
-        for step in range(0, len(df) // batch_size, 2):
+        if self.small_df:
+            df = df.iloc[0:self.batch_size * 2]
 
-            feature_start_index = step * batch_size
-            feature_end_index = feature_start_index + batch_size
+        for step in range(0, len(df) // self.batch_size, 2):
+
+            feature_start_index = step * self.batch_size
+            feature_end_index = feature_start_index + self.batch_size
 
             label_start_index = feature_end_index
-            label_end_index = feature_end_index + batch_size
+            label_end_index = feature_end_index + self.batch_size
 
             if label_end_index > len(df):
                 break
@@ -121,10 +128,18 @@ class GPUDataset(Dataset):
             y_df = pd.concat(
                 [y_df, df.iloc[label_start_index:label_end_index]])
 
-        X_df = X_df[self.get_default_feature_columns()]
-        y_df = y_df[self.get_default_label_columns()]
-
+        X_df, y_df = self.__filter_columns(X_df, y_df)
         X_df, y_df = self.__scale_dfs(X_df, y_df)
+
+        return self.__transform_dfs_to_tensors(X_df, y_df)
+
+    def __scale_dfs(self, X_df: pd.DataFrame, y_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        X_ss = pd.DataFrame(self.standard_scaler.fit_transform(X_df))
+        y_mm = pd.DataFrame(self.minmax_scaler.fit_transform(y_df))
+
+        return X_ss, y_mm
+
+    def __transform_dfs_to_tensors(self, X_df, y_df) -> Tuple[torch.Tensor, torch.Tensor]:
         X_df, y_df = X_df.to_numpy(), y_df.to_numpy()
 
         # Convert to Tensors
@@ -135,15 +150,14 @@ class GPUDataset(Dataset):
         X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
 
         return X_df, y_df
-
-    def __scale_dfs(self, X_df: pd.DataFrame, y_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        X_ss = pd.DataFrame(self.standard_scaler.fit_transform(X_df))
-        y_mm = pd.DataFrame(self.minmax_scaler.fit_transform(y_df))
-
-        return X_ss, y_mm
+    
+    def __filter_columns(self, X_df, y_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        X_df = X_df[self.get_default_feature_columns()]
+        y_df = y_df[self.get_default_label_columns()]
+        
+        return X_df, y_df
 
 
 if __name__ == '__main__':
-    dataset = GPUDataset()
-    
+    dataset = GPUDataset(small_df=True)
     print(dataset.X.shape, dataset.y.shape)
