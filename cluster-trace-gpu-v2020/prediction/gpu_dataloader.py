@@ -7,16 +7,20 @@ import numpy as np
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
+TRAINING_DATAPATH: str = 'training_df.csv'
+TEST_DATAPATH: str = 'test_df.csv'
 
 class GPUDataset(Dataset):
 
     def __init__(
         self,
-        data_path: str = 'training_df.csv',
+        is_training: bool = True,
         data_index: str = 'start_date',
         batch_size: int = 1000,
         small_df: bool = False
     ) -> None:
+        
+        data_path = TRAINING_DATAPATH if is_training else TEST_DATAPATH
 
         # scalers kept as members, since they are also used to invert the transformation
         self.standard_scaler = StandardScaler()
@@ -125,5 +129,5 @@ class GPUDataset(Dataset):
 
 
 if __name__ == '__main__':
-    dataset = GPUDataset(small_df=True)
+    dataset = GPUDataset(is_training=False, small_df=True)
     print(dataset.X.shape, dataset.y.shape)
