@@ -14,8 +14,6 @@ class GPUDataset(Dataset):
         self,
         data_path: str = 'training_df.csv',
         data_index: str = 'start_date',
-        feature_columns: list = None,
-        label_columns: list = None,
         batch_size: int = 1000,
         small_df: bool = False
     ) -> None:
@@ -27,7 +25,7 @@ class GPUDataset(Dataset):
         self.batch_size = batch_size
         self.small_df = small_df
 
-        self.X, self.y = self.__prepare_dataset(
+        self.X, self.y = self.__prepare_dataframe(
             data_path, data_index)
         self.num_samples: int = self.X.shape[0]
 
@@ -49,35 +47,14 @@ class GPUDataset(Dataset):
         return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
                              'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
 
-    def __prepare_dataset(self, data_path: str, data_index: str) -> tuple:
-
-        return self.__prepare_dataframe(data_path, data_index)
-
-    def __prepare_dataframe(self, data_path: str = None, data_index: str = None, drop_columns: List[str] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __prepare_dataframe(self, data_path: str = None, data_index: str = None) -> Tuple[torch.Tensor, torch.Tensor]:
         data_path = self.__prepare_data_path(data_path)
         data_index = self.__prepare_data_index(data_index)
 
         df = pd.read_csv(data_path)
         df.set_index(data_index)
 
-        # One-Hot Encoding
-        # dummies = pd.get_dummies(df.task_name)
-        # df = df.join(dummies)
-
-        # Drop Unused Columns
-        # drop_columns = self.__prepare_drop_columns(drop_columns)
-        # df.drop(columns=drop_columns, inplace=True)
-        # df.dropna(axis=0, inplace=True)
-
-        # df.sort_index(inplace=True)
-
         return self.__append_to_feature_and_label_set(df)
-
-    def __prepare_drop_columns(self, drop_columns: List[str]) -> List[str]:
-        if drop_columns is None or len(drop_columns) == 0:
-            drop_columns = ['gpu_type', 'job_name',
-                            'inst_num', 'task_name', 'machine']
-        return drop_columns
 
     def __prepare_data_path(self, data_path: str) -> str:
         if data_path is None or len(data_path) == 0:
@@ -88,17 +65,6 @@ class GPUDataset(Dataset):
         if data_index is None or len(data_index) == 0:
             data_index = 'start_date'
         return data_index
-
-    def __prepare_feature_columns(self, feature_columns: List[str]) -> List[str]:
-        if feature_columns is None or len(feature_columns) == 0:
-            feature_columns = self.get_default_feature_columns()
-        return feature_columns
-
-    def __prepare_label_columns(self, label_columns: List[str]) -> List[str]:
-        if label_columns is None or len(label_columns) == 0:
-            label_columns = self.get_default_label_columns()
-
-        return label_columns
 
     def _get_all_machines(self, df: pd.DataFrame) -> np.ndarray:
         return df.machine.unique()
@@ -150,11 +116,11 @@ class GPUDataset(Dataset):
         X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
 
         return X_df, y_df
-    
+
     def __filter_columns(self, X_df, y_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
         X_df = X_df[self.get_default_feature_columns()]
         y_df = y_df[self.get_default_label_columns()]
-        
+
         return X_df, y_df
 
 
