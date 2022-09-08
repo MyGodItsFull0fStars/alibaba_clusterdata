@@ -54,3 +54,62 @@ dependencies:
   - pandas
   - matplotlib
   - scikit-learn
+name: ml_pytorch
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pytorch
+  - jupyter_client
+  - ptyprocess
+  - ipython
+  - pure_eval
+  - prompt-toolkit
+  - libsodium
+  - setuptools
+  - libcxx
+  - python-dateutil
+  - traitlets
+  - backcall
+  - jedi
+  - matplotlib-inline
+  - tk
+  - pexpect
+  - appnope
+  - xz
+  - asttokens
+  - six
+  - jupyter_core
+  - entrypoints
+  - certifi
+  - pygments
+  - pip
+  - ca-certificates
+  - decorator
+  - ncurses
+  - debugpy
+  - nest-asyncio
+  - sqlite
+  - executing
+  - parso
+  - readline
+  - wheel
+  - libffi
+  - pickleshare
+  - tzdata
+  - zlib
+  - zeromq
+  - stack_data
+  - pyzmq
+  - openssl
+  - wcwidth
+  - tornado
+  - ipykernel
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - wandb
+  - autopep8
+prefix: /Users/macbook/opt/miniconda3/envs/ml_pytorch
