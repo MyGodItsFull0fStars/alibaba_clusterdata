@@ -48,8 +48,9 @@ class GPUDataset(Dataset):
                 'xComputeWorker']
 
     def get_default_label_columns(self) -> List[str]:
-        return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
-                             'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
+        # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
+        #                      'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
+        return ['cpu_usage', 'avg_mem', 'runtime']
 
     def __prepare_dataframe(self, data_path: str = None, data_index: str = None) -> Tuple[torch.Tensor, torch.Tensor]:
         data_path = self.__prepare_data_path(data_path)
@@ -80,7 +81,7 @@ class GPUDataset(Dataset):
         # df = df.iloc[0:1954000]
 
         if self.small_df:
-            df = df.iloc[0:self.batch_size * 2]
+            df = df.iloc[0:10000]
 
         for step in range(0, len(df) // self.batch_size, 2):
 
