@@ -81,7 +81,7 @@ class GPUDataset(Dataset):
         # df = df.iloc[0:1954000]
 
         if self.small_df:
-            df = df.iloc[0:10000]
+            df = df.iloc[0:20000]
 
         for step in range(0, len(df) // self.batch_size, 2):
 

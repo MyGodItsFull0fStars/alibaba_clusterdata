@@ -1,4 +1,5 @@
 import pandas as pd
+import torch
 
 def get_df(file: str, header=None, sample: bool = False, sample_number: int = 1000):
     if sample:
@@ -9,3 +10,10 @@ def get_df(file: str, header=None, sample: bool = False, sample_number: int = 10
     df.columns = pd.read_csv("{}.header".format(
         file.split('.csv')[0])).columns if header is None else header
     return df
+
+
+def get_device() -> torch.device:
+    return torch.device(get_device_as_string())
+
+def get_device_as_string() -> str:
+    return 'cuda' if torch.cuda.is_available() else 'cpu'

@@ -1,5 +1,11 @@
+import imp
+from webbrowser import get
 import torch
 import torch.nn as nn
+
+from utils import get_device
+
+device = get_device()
 
 class LSTM(nn.Module):
 
@@ -16,20 +22,22 @@ class LSTM(nn.Module):
             input_size=input_size,
             hidden_size=hidden_size,
             num_layers=num_layers,
-            batch_first=True)
+            batch_first=True).to(device)
+        
+        self.dropout = nn.Dropout(0.25)
 
         # first fully connected layer
-        self.fc_1 = nn.Linear(hidden_size, 256)
+        self.fc_1 = nn.Linear(hidden_size, 512).to(device)
         # second fully connected layer
-        self.fc_2 = nn.Linear(256, 128)
+        self.fc_2 = nn.Linear(512, 256).to(device)
         # thrid fully connected layer
-        self.fc_3 = nn.Linear(128, num_classes)
+        self.fc_3 = nn.Linear(256, num_classes).to(device)
         # activation function
-        self.relu = nn.LeakyReLU()
+        self.relu = nn.LeakyReLU().to(device)
 
     def forward(self, input):
-        hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size)
-        internal_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size)
+        hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).to(device)
+        internal_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).to(device)
 
         # Propagate input through LSTM
         output, (hn, cn) = self.lstm(input, (hidden_state, internal_state))
@@ -38,8 +46,10 @@ class LSTM(nn.Module):
         out = self.relu(hn)
         out = self.fc_1(out)
         out = self.relu(out)
+        out = self.dropout(out)
         out = self.fc_2(out)
         out = self.relu(out)
+        out = self.dropout(out)
         out = self.fc_3(out)
         
         return out
