@@ -6,6 +6,7 @@ from utils import get_device
 
 device = get_device()
 
+# https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66
 class LSTM(nn.Module):
 
     def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int) -> None:
@@ -23,7 +24,7 @@ class LSTM(nn.Module):
             num_layers=num_layers,
             batch_first=True).to(device)
         
-        self.dropout = nn.Dropout(0.25)
+        self.dropout = nn.Dropout(0.4)
 
         # first fully connected layer
         self.fc_1 = nn.Linear(hidden_size, 512).to(device)
@@ -52,4 +53,5 @@ class LSTM(nn.Module):
         out = self.fc_3(out)
         
         return torch.abs(out)
+
     

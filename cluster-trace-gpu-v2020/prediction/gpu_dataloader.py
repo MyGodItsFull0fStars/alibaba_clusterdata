@@ -50,7 +50,7 @@ class GPUDataset(Dataset):
     def get_default_label_columns(self) -> List[str]:
         # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
         #                      'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
-        return ['cpu_usage', 'avg_mem', 'runtime']
+        return ['runtime']
 
     def __prepare_dataframe(self, data_path: str = None, data_index: str = None) -> Tuple[torch.Tensor, torch.Tensor]:
         data_path = self.__prepare_data_path(data_path)
