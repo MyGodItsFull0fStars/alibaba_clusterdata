@@ -1,4 +1,3 @@
-import imp
 from webbrowser import get
 import torch
 import torch.nn as nn
@@ -52,5 +51,5 @@ class LSTM(nn.Module):
         out = self.dropout(out)
         out = self.fc_3(out)
         
-        return out
+        return torch.abs(out)
     
