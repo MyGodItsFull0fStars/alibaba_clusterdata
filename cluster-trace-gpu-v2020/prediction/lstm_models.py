@@ -39,7 +39,6 @@ class LSTM(nn.Module):
         self.fc_3 = nn.Linear(256, num_classes).to(device)
         # activation function
         self.relu = nn.LeakyReLU().to(device)
-        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, input: torch.Tensor):
         # hidden_state = torch.zeros(self.num_layers * 2, input.size(0), self.hidden_size).to(device)
