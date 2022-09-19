@@ -48,7 +48,7 @@ class LSTM(nn.Module):
         
         # Propagate input through LSTM
         # output, (hn, cn) = self.lstm(input, (hidden_state, internal_state))
-        lstm_out, self.hidden = self.lstm(linear_output)
+        lstm_out, _ = self.lstm(linear_output)
 
         # Reshaping the data for the Dense layer
         lstm_out = lstm_out.view(-1, self.hidden_size * 2)
@@ -62,17 +62,9 @@ class LSTM(nn.Module):
         out = self.relu(out)
         out = self.fc_3(out)
         
-        # out = self.softmax(out)
         return torch.abs(out)
-        # return out
 
     
-    
-    '''
-    torch.Size([200, 1, 19])
-    torch.Size([1, 200, 2432])
-    torch.Size([200, 2432])
-'''
 
 if __name__ == '__main__':
     
