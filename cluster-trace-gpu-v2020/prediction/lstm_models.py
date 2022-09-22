@@ -18,7 +18,7 @@ class LSTM(nn.Module):
         self.num_layers: int = num_layers
         self.seq_length: int = seq_length
         
-        self.init_linear = nn.Linear(self.input_size, self.input_size)
+        self.init_linear = nn.Linear(self.input_size, self.input_size).to(device)
 
         # long-short term memory layer
         self.lstm = nn.LSTM(
