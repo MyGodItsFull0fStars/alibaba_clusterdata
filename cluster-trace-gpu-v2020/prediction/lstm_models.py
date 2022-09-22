@@ -45,6 +45,7 @@ class LSTM(nn.Module):
         # internal_state = torch.zeros(self.num_layers * 2, input.size(0), self.hidden_size).to(device)
 
         linear_output = self.init_linear(input)
+        linear_output = self.relu(linear_output)
         
         # Propagate input through LSTM
         # output, (hn, cn) = self.lstm(input, (hidden_state, internal_state))
