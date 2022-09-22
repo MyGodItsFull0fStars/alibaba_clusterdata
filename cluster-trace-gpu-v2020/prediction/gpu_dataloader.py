@@ -31,6 +31,7 @@ class GPUDataset(Dataset):
 
         self.X, self.y = self.__prepare_dataframe(
             data_path, data_index)
+        self.X_orig, self.y_orig = torch.clone(self.X), torch.clone(self.y)
         self.num_samples: int = self.X.shape[0]
 
     def __getitem__(self, index):
@@ -81,7 +82,7 @@ class GPUDataset(Dataset):
         # df = df.iloc[0:1954000]
 
         if self.small_df:
-            df = df.iloc[0:1000]
+            df = df.iloc[0:20000]
 
         for step in range(0, len(df) // self.batch_size, 2):
 
