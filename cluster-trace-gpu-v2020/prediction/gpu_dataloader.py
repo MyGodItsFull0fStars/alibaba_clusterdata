@@ -10,6 +10,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 TRAINING_DATAPATH: str = 'training_df.csv'
 TEST_DATAPATH: str = 'test_df.csv'
 
+
 class GPUDataset(Dataset):
 
     def __init__(
@@ -19,7 +20,7 @@ class GPUDataset(Dataset):
         batch_size: int = 1000,
         small_df: bool = False
     ) -> None:
-        
+
         data_path = TRAINING_DATAPATH if is_training else TEST_DATAPATH
 
         # scalers kept as members, since they are also used to invert the transformation
@@ -48,6 +49,9 @@ class GPUDataset(Dataset):
                 'TVMTuneMain', 'chief', 'evaluator', 'ps', 'tensorflow', 'worker',
                 'xComputeWorker']
 
+    def get_plan_cap_feature_columns(self) -> List[str]:
+        return ['plan_cpu', 'plan_mem', 'plan_gpu', 'cap_cpu', 'cap_mem', 'cap_gpu']
+
     def get_default_label_columns(self) -> List[str]:
         # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
         #                      'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
@@ -59,6 +63,7 @@ class GPUDataset(Dataset):
 
         df = pd.read_csv(data_path)
         df.set_index(data_index)
+        df.dropna(inplace=True)
 
         return self.__append_to_feature_and_label_set(df)
 
@@ -83,6 +88,8 @@ class GPUDataset(Dataset):
 
         if self.small_df:
             df = df.iloc[0:20000]
+
+        # print(df.head())
 
         for step in range(0, len(df) // self.batch_size, 2):
 
@@ -124,7 +131,14 @@ class GPUDataset(Dataset):
         return X_df, y_df
 
     def __filter_columns(self, X_df, y_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        # X_df = X_df[self.get_default_feature_columns() + self.get_plan_cap_feature_columns()]
         X_df = X_df[self.get_default_feature_columns()]
+
+        # y_plan = y_df[self.get_plan_cap_feature_columns()]
+        # y_plan = y_plan.reset_index(drop=True)
+
+        # X_df[self.get_plan_cap_feature_columns()] = y_plan
+
         y_df = y_df[self.get_default_label_columns()]
 
         return X_df, y_df
@@ -133,3 +147,4 @@ class GPUDataset(Dataset):
 if __name__ == '__main__':
     dataset = GPUDataset(is_training=False, small_df=True)
     print(dataset.X.shape, dataset.y.shape)
+    # print(dataset.X)
