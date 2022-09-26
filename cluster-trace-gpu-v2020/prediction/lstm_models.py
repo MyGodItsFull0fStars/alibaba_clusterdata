@@ -8,6 +8,9 @@ from utils import get_device
 device = get_device()
 
 # https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66
+# https://www.crosstab.io/articles/time-series-pytorch-lstm
+# https://www.kaggle.com/code/omershect/learning-pytorch-lstm-deep-learning-with-m5-data/notebook
+# https://github.com/pytorch/examples/blob/main/time_sequence_prediction/train.py
 class LSTM(nn.Module):
 
     def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int) -> None:
@@ -19,17 +22,18 @@ class LSTM(nn.Module):
         self.seq_length: int = seq_length
         
         self.init_linear = nn.Linear(self.input_size, self.input_size).to(device)
+        
+        self.bidirectional = True
 
         # long-short term memory layer
         self.lstm = nn.LSTM(
             input_size=input_size,
             hidden_size=hidden_size,
-            bidirectional=True,
-            batch_first=True
+            bidirectional=self.bidirectional,
+            batch_first=True,
         ).to(device)
     
         self.dropout = nn.Dropout(0.4)
-        # self.dropout_fc_2 = nn.Dropout(0.2)
 
         # first fully connected layer
         self.fc_1 = nn.Linear(hidden_size * 2, 512).to(device)
@@ -41,35 +45,41 @@ class LSTM(nn.Module):
         self.relu = nn.LeakyReLU().to(device)
 
     def forward(self, input: torch.Tensor):
-        # hidden_state = torch.zeros(self.num_layers * 2, input.size(0), self.hidden_size).to(device)
-        # internal_state = torch.zeros(self.num_layers * 2, input.size(0), self.hidden_size).to(device)
+        # bidirectional_mult = 2 if self.bidirectional else 1
+        # hidden_state = torch.zeros(self.num_layers * bidirectional_mult, input.size(0), self.hidden_size).requires_grad_()
+        # internal_state = torch.zeros(self.num_layers * bidirectional_mult, input.size(0), self.hidden_size).requires_grad_()
+        # hidden_state, internal_state = hidden_state.to(device), internal_state.to(device)
 
         linear_output = self.init_linear(input)
         linear_output = self.relu(linear_output)
         
         # Propagate input through LSTM
-        # output, (hn, cn) = self.lstm(input, (hidden_state, internal_state))
+        # _, (hn, _) = self.lstm(input, (hidden_state, internal_state))
         lstm_out, _ = self.lstm(linear_output)
+
 
         # Reshaping the data for the Dense layer
         lstm_out = lstm_out.view(-1, self.hidden_size * 2)
+        # out = hn.view(-1, self.hidden_size)
         # print(hn.shape)
-        out = self.relu(lstm_out)
-        out = self.fc_1(out)
+        # out = self.relu(hn[0])
+        out = self.fc_1(lstm_out)
         out = self.dropout(out)
         out = self.relu(out)
+
         out = self.fc_2(out)
         out = self.dropout(out)
         out = self.relu(out)
         out = self.fc_3(out)
         
-        return torch.abs(out)
+        return out
+        # return torch.abs(out)
 
     
 
 if __name__ == '__main__':
     
-    test_tensor = torch.ones([300, 1, 19], dtype=torch.float32)
+    test_tensor = torch.ones([300, 1, 19], dtype=torch.float32).to(device)
     
     # number of features
     input_size: int = test_tensor.shape[2]
