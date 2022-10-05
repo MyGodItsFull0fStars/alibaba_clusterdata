@@ -7,6 +7,9 @@ from utils import get_device
 
 device = get_device()
 
+# https://blog.floydhub.com/long-short-term-memory-from-zero-to-hero-with-pytorch/
+# https://medium.com/unit8-machine-learning-publication/transfer-learning-for-time-series-forecasting-87f39e375278
+# https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
 # https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66
 # https://www.crosstab.io/articles/time-series-pytorch-lstm
 # https://www.kaggle.com/code/omershect/learning-pytorch-lstm-deep-learning-with-m5-data/notebook
