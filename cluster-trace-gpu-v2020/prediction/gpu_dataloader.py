@@ -1,6 +1,6 @@
 from typing import List, Tuple
 import torch
-from torch import Tensor
+from torch import Tensor, std
 from torch.utils.data import Dataset
 
 import pandas as pd
@@ -11,8 +11,11 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 TRAINING_DATAPATH: str = 'training_df.csv'
 TEST_DATAPATH: str = 'test_df.csv'
 
+MEAN_KEY: str = 'mean'
+STD_DEV_KEY: str = 'std'
 
-class ForecastDataset(Dataset):
+
+class GPUDataset(Dataset):
 
     def __init__(
         self,
@@ -109,6 +112,35 @@ class ForecastDataset(Dataset):
         else:
             return df.iloc[:1954000]
 
+    def _get_std_mean_df(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        column_list = list(
+            filter(lambda v: v not in self._get_job_columns(), df.columns))
+        std_mean_df = pd.DataFrame(
+            index=[MEAN_KEY, STD_DEV_KEY], columns=column_list)
+
+        for col in df.columns:
+            if col in self._get_job_columns():
+                continue
+            mean = df[col].mean()
+            stddev = df[col].std()
+
+            std_mean_df.at[MEAN_KEY, col] = mean
+            std_mean_df.at[STD_DEV_KEY, col] = stddev
+
+        return std_mean_df
+
+    def _standardize_df(self, df: pd.DataFrame, std_mean_df: pd.DataFrame = None) -> pd.DataFrame:  # type: ignore
+        if std_mean_df is None:
+            std_mean_df = self._get_std_mean_df(df)
+
+        for col in std_mean_df.columns:
+            mean = std_mean_df.at[MEAN_KEY, col]
+            stddev = std_mean_df.at[STD_DEV_KEY, col]
+            df[col] = (df[col] - mean) / stddev
+
+        return df
+
     def __len__(self):
         return self.num_samples
 
@@ -117,7 +149,7 @@ class ForecastDataset(Dataset):
             return self.X[index], self.y[index]
 
 
-class RuntimeDataset(ForecastDataset):
+class RuntimeDataset(GPUDataset):
 
     def __init__(
         self,
@@ -142,10 +174,9 @@ class RuntimeDataset(ForecastDataset):
 
         X_df = df[self._get_feature_columns()]
         y_df = df[self._get_label_columns()]
-
-        # X_df, y_df = self._scale_dfs(X_df, y_df)
-        print(X_df.head(1))
-        print(y_df.head(1))
+        
+        self.X_df_stddev = self._get_std_mean_df(X_df)
+        self.y_df_stddev = self._get_std_mean_df(y_df)        
 
         return self._get_feature_label_tensors()
 
@@ -156,7 +187,7 @@ class RuntimeDataset(ForecastDataset):
         return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
 
-class GPUDataset(ForecastDataset):
+class ForecastDataset(GPUDataset):
 
     def __init__(
         self,
@@ -166,7 +197,7 @@ class GPUDataset(ForecastDataset):
         future_step: int = 10,
         small_df: bool = False
     ) -> None:
-        super(GPUDataset, self).__init__(is_training,
+        super(ForecastDataset, self).__init__(is_training,
                                          data_index, batch_size, future_step, small_df)
 
         self.X, self.y = self._prepare_data_tensors()
@@ -247,15 +278,19 @@ class GPUDataset(ForecastDataset):
 
 if __name__ == '__main__':
 
-    # test_dataset = ForecastDataset()
-    # print(test_dataset.__class__.__name__,
-    #       test_dataset.X.shape, test_dataset.y.shape)
+    test_dataset = ForecastDataset()
+    print(test_dataset.__class__.__name__,
+          test_dataset.X.shape, test_dataset.y.shape)
+    std_dataset = test_dataset._read_csv()
+    std_dataset = test_dataset._standardize_df(std_dataset)
+    print(std_dataset.head())
+
     # test_dataset = GPUDataset(small_df=True)
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
-    test_dataset = RuntimeDataset(small_df=True)
-    print(test_dataset.__class__.__name__,
-          test_dataset.X.shape, test_dataset.y.shape)
+    # test_dataset = RuntimeDataset(small_df=True)
+    # print(test_dataset.__class__.__name__,
+    #       test_dataset.X.shape, test_dataset.y.shape)
 
     # dataset = GPUDataset(is_training=True, small_df=True)
     # print(dataset.X.shape, dataset.y.shape)
