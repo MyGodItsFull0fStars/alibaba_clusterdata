@@ -1,10 +1,15 @@
 from typing import List, Tuple
 import torch
-from torch import Tensor, std
+from torch import Tensor, is_distributed, std
 from torch.utils.data import Dataset
 
+from time import perf_counter
 import pandas as pd
 import numpy as np
+
+import matplotlib.pyplot as plt
+
+from dataframe_scaler import DataFrameScaler
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
@@ -13,6 +18,10 @@ TEST_DATAPATH: str = 'test_df.csv'
 
 MEAN_KEY: str = 'mean'
 STD_DEV_KEY: str = 'std'
+
+# adding this line because standardizing the dataframe is printing a false positive error message
+# source: https://stackoverflow.com/a/42190404
+pd.options.mode.chained_assignment = None  # type: ignore
 
 
 class GPUDataset(Dataset):
@@ -31,18 +40,21 @@ class GPUDataset(Dataset):
         self.data_path = self.__prepare_data_path(self.data_path)
         self.data_index = self.__prepare_data_index(data_index)
 
-        # scalers kept as members, since they are also used to invert the transformation
-        self.standard_scaler = StandardScaler()
-        self.minmax_scaler = MinMaxScaler()
-
         self.batch_size: int = batch_size
         self.small_df: bool = small_df
+
+        self.X_scaler: DataFrameScaler = DataFrameScaler()
+        self.y_scaler: DataFrameScaler = DataFrameScaler()
 
         self.X: Tensor = torch.Tensor()
         self.y: Tensor = torch.Tensor()
 
-        # self.X_orig, self.y_orig = torch.clone(self.X), torch.clone(self.y)
-        self.num_samples: int = -1
+    def __len__(self):
+        return self.X.size(0)
+
+    def __getitem__(self, index):
+        if 0 <= index < self.X.size(0):
+            return self.X[index], self.y[index]
 
     def _prepare_data_tensors(self) -> Tuple[Tensor, Tensor]:
         return torch.empty(0), torch.empty(0)
@@ -100,56 +112,26 @@ class GPUDataset(Dataset):
             data_index = 'start_date'
         return data_index
 
-    def _scale_dfs(self, X_df: pd.DataFrame, y_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        X_ss = pd.DataFrame(self.standard_scaler.fit_transform(X_df))
-        y_mm = pd.DataFrame(self.minmax_scaler.fit_transform(y_df))
-
-        return X_ss, y_mm
-
-    def _resize_df(self, df: pd.DataFrame, split_index: int = 10000) -> pd.DataFrame:
+    def _resize_df(self, df: pd.DataFrame, split_index: int = 2000) -> pd.DataFrame:
         if self.small_df:
             return df.iloc[:split_index]
         else:
             return df.iloc[:1954000]
 
-    def _get_std_mean_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _transform_dfs_to_tensors(self, X_df, y_df) -> Tuple[torch.Tensor, torch.Tensor]:
+        X_df, y_df = X_df.to_numpy(), y_df.to_numpy()
 
-        column_list = list(
-            filter(lambda v: v not in self._get_job_columns(), df.columns))
-        std_mean_df = pd.DataFrame(
-            index=[MEAN_KEY, STD_DEV_KEY], columns=column_list)
+        # Convert to Tensors
+        X_df = torch.Tensor(X_df)
+        y_df = torch.Tensor(y_df)
 
-        for col in df.columns:
-            if col in self._get_job_columns():
-                continue
-            mean = df[col].mean()
-            stddev = df[col].std()
+        # Reshape Feature Tensor
+        X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
 
-            std_mean_df.at[MEAN_KEY, col] = mean
-            std_mean_df.at[STD_DEV_KEY, col] = stddev
-
-        return std_mean_df
-
-    def _standardize_df(self, df: pd.DataFrame, std_mean_df: pd.DataFrame = None) -> pd.DataFrame:  # type: ignore
-        if std_mean_df is None:
-            std_mean_df = self._get_std_mean_df(df)
-
-        for col in std_mean_df.columns:
-            mean = std_mean_df.at[MEAN_KEY, col]
-            stddev = std_mean_df.at[STD_DEV_KEY, col]
-            df[col] = (df[col] - mean) / stddev
-
-        return df
-
-    def __len__(self):
-        return self.num_samples
-
-    def __getitem__(self, index):
-        if 0 <= index < self.num_samples:
-            return self.X[index], self.y[index]
+        return X_df, y_df
 
 
-class RuntimeDataset(GPUDataset):
+class UtilizationDataset(GPUDataset):
 
     def __init__(
         self,
@@ -159,8 +141,8 @@ class RuntimeDataset(GPUDataset):
         future_step: int = 10,
         small_df: bool = False
     ) -> None:
-        super(RuntimeDataset, self).__init__(is_training, data_index,
-                                             batch_size, future_step, small_df)  # type: ignore
+        super(UtilizationDataset, self).__init__(is_training, data_index,
+                                                 batch_size, future_step, small_df)  # type: ignore
 
         self.X, self.y = self._prepare_data_tensors()
 
@@ -174,11 +156,14 @@ class RuntimeDataset(GPUDataset):
 
         X_df = df[self._get_feature_columns()]
         y_df = df[self._get_label_columns()]
-        
-        self.X_df_stddev = self._get_std_mean_df(X_df)
-        self.y_df_stddev = self._get_std_mean_df(y_df)        
 
-        return self._get_feature_label_tensors()
+        self.X_scaler = DataFrameScaler(X_df, self._get_job_columns())
+        self.y_scaler = DataFrameScaler(y_df, self._get_job_columns())
+
+        X_tens, y_tens = self._transform_dfs_to_tensors(
+            self.X_scaler.standardize_df(X_df), self.y_scaler.normalize_df(y_df))
+
+        return X_tens, y_tens
 
     def _get_feature_columns(self) -> List[str]:
         return self._get_plan_utilization_columns() + self._get_cap_utilization_columns() + self._get_job_columns()
@@ -198,7 +183,7 @@ class ForecastDataset(GPUDataset):
         small_df: bool = False
     ) -> None:
         super(ForecastDataset, self).__init__(is_training,
-                                         data_index, batch_size, future_step, small_df)
+                                              data_index, batch_size, future_step, small_df)
 
         self.X, self.y = self._prepare_data_tensors()
         self.X_orig, self.y_orig = torch.clone(self.X), torch.clone(self.y)
@@ -246,30 +231,13 @@ class ForecastDataset(GPUDataset):
                 [y_df, df.iloc[label_start_index:label_end_index]])
 
         X_df, y_df = self.__filter_columns(X_df, y_df)
-        X_df, y_df = self.__scale_dfs(X_df, y_df)
+        # X_df, y_df = self.__scale_dfs(X_df, y_df)
+        X_df = self.X_scaler.fit_transform_std(X_df)
+        y_df = self.y_scaler.fit_transform_norm(y_df)
 
-        return self.__transform_dfs_to_tensors(X_df, y_df)
-
-    def __scale_dfs(self, X_df: pd.DataFrame, y_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        X_ss = pd.DataFrame(self.standard_scaler.fit_transform(X_df))
-        y_mm = pd.DataFrame(self.minmax_scaler.fit_transform(y_df))
-
-        return X_ss, y_mm
-
-    def __transform_dfs_to_tensors(self, X_df, y_df) -> Tuple[torch.Tensor, torch.Tensor]:
-        X_df, y_df = X_df.to_numpy(), y_df.to_numpy()
-
-        # Convert to Tensors
-        X_df = torch.Tensor(X_df)
-        y_df = torch.Tensor(y_df)
-
-        # Reshape Feature Tensor
-        X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
-
-        return X_df, y_df
+        return self._transform_dfs_to_tensors(X_df, y_df)
 
     def __filter_columns(self, X_df, y_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        # X_df = X_df[self.get_default_feature_columns() + self.get_plan_cap_feature_columns()]
         X_df = X_df[self._get_feature_columns()]
         y_df = y_df[self._get_label_columns()]
 
@@ -278,20 +246,24 @@ class ForecastDataset(GPUDataset):
 
 if __name__ == '__main__':
 
-    test_dataset = ForecastDataset()
-    print(test_dataset.__class__.__name__,
-          test_dataset.X.shape, test_dataset.y.shape)
-    std_dataset = test_dataset._read_csv()
-    std_dataset = test_dataset._standardize_df(std_dataset)
-    print(std_dataset.head())
+    # std_dataset = test_dataset._read_csv()
+    # std_dataset = test_dataset._standardize_df(std_dataset)
+    # print(std_dataset.head())
 
     # test_dataset = GPUDataset(small_df=True)
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
-    # test_dataset = RuntimeDataset(small_df=True)
+
+    # test_dataset = UtilizationDataset(small_df=True)
+
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
 
+    # x = test_dataset.X
+
+    test_dataset = ForecastDataset(small_df=True)
+    print(test_dataset.__class__.__name__,
+          test_dataset.X.shape, test_dataset.y.shape)
     # dataset = GPUDataset(is_training=True, small_df=True)
     # print(dataset.X.shape, dataset.y.shape)
     # print(dataset.X)
