@@ -1,10 +1,10 @@
-from typing import List, Tuple
+from typing import List
+
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 import torch
+from pandas import DataFrame
 from torch import Tensor
-
 
 MEAN_KEY: str = 'mean'
 STD_DEV_KEY: str = 'std'
@@ -18,11 +18,13 @@ class DataFrameScaler():
     def __init__(self, df: DataFrame = None, filter_columns=None) -> None:  # type: ignore
 
         self.filter_columns = filter_columns
+        self.df_data_types = None
 
         if df is not None:
             self.df_columns = df.columns
+            # preserve datatypes of dataframe
             self.df_data_types = df.dtypes.to_dict()
-            self.scaled_df_columns = self._get_scaled_columns(
+            self.scaled_df_columns = self.get_scaled_columns(
                 df, filter_columns)
 
             self.fit(df)
@@ -30,7 +32,16 @@ class DataFrameScaler():
     def fit(self, df: DataFrame) -> None:
         self.std_dev_df = self._get_std_mean_df(df)
         self.norm_dev_df = self._get_norm_min_max_df(df)
+        
+    def fit_transform_std(self, df: DataFrame) -> DataFrame:
+        self.fit(df)
+        return self.standardize_df(df)
 
+    def fit_transform_norm(self, df: DataFrame) -> DataFrame:
+        self.fit(df)
+        return self.normalize_df(df)
+        
+        
     def _get_std_mean_df(self, df: DataFrame) -> DataFrame:
         std_mean_df = DataFrame(
             index=[MEAN_KEY, STD_DEV_KEY], columns=self.scaled_df_columns)
@@ -53,42 +64,41 @@ class DataFrameScaler():
 
         return norm_min_max_df
 
-    def _standardize_df(self, df: DataFrame) -> DataFrame:
+    def standardize_df(self, df: DataFrame) -> DataFrame:
         std_columns = self.scaled_df_columns
         df_c = df.copy()
         df_c.loc[:, std_columns] = df_c.loc[:, std_columns].apply(
             lambda x: ((x - self.std_dev_df.at[MEAN_KEY, x.name]) / self.std_dev_df.at[STD_DEV_KEY, x.name]))
-
         
         return df_c
 
-    def _standardize_df_(self, df: DataFrame) -> DataFrame:
+    def standardize_df_(self, df: DataFrame) -> DataFrame:
         std_columns = self.scaled_df_columns
         df.loc[:, std_columns] = df.loc[:, std_columns].apply(
             lambda x: ((x - self.std_dev_df.at[MEAN_KEY, x.name]) / self.std_dev_df.at[STD_DEV_KEY, x.name]))
 
         return df
 
-    def _inverse_standardize_df(self, df: DataFrame) -> DataFrame:
+    def inverse_standardize_df(self, df: DataFrame) -> DataFrame:
         std_columns = self.scaled_df_columns
         df_c = df.copy()
         df_c.loc[:, std_columns] = df_c.loc[:, std_columns].apply(
             lambda x: x * self.std_dev_df.at[STD_DEV_KEY, x.name] + self.std_dev_df.at[MEAN_KEY, x.name])
 
-        return df_c.astype(self.df_data_types)
+        return df_c.astype(self.df_data_types)  # type: ignore
 
-    def _inverse_standardize_df_(self, df: DataFrame) -> DataFrame:
+    def inverse_standardize_df_(self, df: DataFrame) -> DataFrame:
         std_columns = self.scaled_df_columns
         df.loc[:, std_columns] = df.loc[:, std_columns].apply(
             lambda x: x * self.std_dev_df.at[STD_DEV_KEY, x.name] + self.std_dev_df.at[MEAN_KEY, x.name])
 
         return df
 
-    def _inverse_standardize_tensor(self, t: Tensor) -> DataFrame:
-        t_df = self._convert_tensor_to_df(t)
-        return self._inverse_standardize_df(t_df).astype(self.df_data_types)
+    def inverse_standardize_tensor(self, t: Tensor) -> DataFrame:
+        t_df = self.convert_tensor_to_df(t)
+        return self.inverse_standardize_df(t_df).astype(self.df_data_types)
 
-    def _normalize_df(self, df: DataFrame) -> DataFrame:
+    def normalize_df(self, df: DataFrame) -> DataFrame:
         norm_columns = self.scaled_df_columns
         df_c = df.copy()
         df_c.loc[:, norm_columns] = df_c.loc[:, norm_columns].apply(
@@ -96,14 +106,14 @@ class DataFrameScaler():
 
         return df_c
 
-    def _normalize_df_(self, df: DataFrame) -> DataFrame:
+    def normalize_df_(self, df: DataFrame) -> DataFrame:
         norm_columns = self.scaled_df_columns
         df.loc[:, norm_columns] = df.loc[:, norm_columns].apply(
             lambda x: (x - self.norm_dev_df.at[MIN_KEY, x.name]) / (self.norm_dev_df.at[MAX_KEY, x.name] - self.norm_dev_df.at[MIN_KEY, x.name]))
 
         return df
 
-    def _inverse_normalization_df(self, df: DataFrame) -> DataFrame:
+    def inverse_normalization_df(self, df: DataFrame) -> DataFrame:
         norm_columns = self.scaled_df_columns
         df_c = df.copy()
 
@@ -112,7 +122,7 @@ class DataFrameScaler():
 
         return df_c.astype(self.df_data_types)  # type: ignore
 
-    def _inverse_normalization_df_(self, df: DataFrame) -> DataFrame:
+    def inverse_normalization_df_(self, df: DataFrame) -> DataFrame:
         norm_columns = self.scaled_df_columns
 
         df.loc[:, norm_columns] = df.loc[:, norm_columns].apply(
@@ -120,11 +130,11 @@ class DataFrameScaler():
 
         return df
 
-    def _convert_tensor_to_df(self, t: Tensor) -> DataFrame:
+    def convert_tensor_to_df(self, t: Tensor) -> DataFrame:
         t.squeeze_()  # remove dimensions with size 1
         return DataFrame(data=t.numpy(), columns=self.df_columns)
 
-    def _get_scaled_columns(self, df: DataFrame, filter_columns) -> List[str]:
+    def get_scaled_columns(self, df: DataFrame, filter_columns) -> List[str]:
         return list(filter(lambda column: column not in filter_columns, df.columns))
 
 
@@ -133,15 +143,15 @@ if __name__ == '__main__':
     arr = np.arange(50)
     arr = arr.reshape(10, 5)
     df = DataFrame(arr)
-    df = df.astype({0: 'float64'})
+    # df = df.astype({0: 'float64'})
 
 
     # print(df)
     df_scale = DataFrameScaler(df, [0, 4])
     # print(df_scale.std_dev_df)
     # print(df_scale.norm_dev_df)
-    df_std = df_scale._standardize_df(df)
-    df_norm = df_scale._normalize_df(df)
+    df_std = df_scale.standardize_df(df)
+    df_norm = df_scale.normalize_df(df)
 
     
     asdf = {x: 'int64' for x in range(5)}
@@ -151,7 +161,7 @@ if __name__ == '__main__':
     # print('---------------')
     # print(df)
     # print('---------------')
-    inv_std_df = df_scale._inverse_standardize_df(df_std)
+    inv_std_df = df_scale.inverse_standardize_df(df_std)
     print(inv_std_df)
        
     # print('---------------')
