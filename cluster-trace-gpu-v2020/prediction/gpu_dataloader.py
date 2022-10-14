@@ -96,11 +96,29 @@ class GPUDataset(Dataset):
     def _get_runtime_column(self) -> List[str]:
         return ['runtime']
 
+    def _get_plan_cpu_columns(self) -> List[str]:
+        return ['plan_cpu']
+
+    def _get_plan_mem_columns(self) -> List[str]:
+        return ['plan_mem']
+
+    def _get_plan_gpu_columns(self) -> List[str]:
+        return ['plan_gpu']
+
     def _get_plan_utilization_columns(self) -> List[str]:
-        return ['plan_cpu', 'plan_mem', 'plan_gpu']
+        return self._get_plan_cpu_columns() + self._get_plan_gpu_columns() + self._get_plan_mem_columns()
+
+    def get_cap_cpu_columns(self) -> List[str]:
+        return ['cap_cpu']
+
+    def get_cap_gpu_columns(self) -> List[str]:
+        return ['cap_gpu']
+
+    def get_cap_mem_columns(self) -> List[str]:
+        return ['cap_mem']
 
     def _get_cap_utilization_columns(self) -> List[str]:
-        return ['cap_cpu', 'cap_mem', 'cap_gpu']
+        return self.get_cap_cpu_columns() + self.get_cap_gpu_columns() + self.get_cap_mem_columns()
 
     def __prepare_data_path(self, data_path: str) -> str:
         if data_path is None or len(data_path) == 0:
@@ -166,10 +184,11 @@ class UtilizationDataset(GPUDataset):
         return X_tens, y_tens
 
     def _get_feature_columns(self) -> List[str]:
-        return self._get_plan_utilization_columns() + self._get_cap_utilization_columns() + self._get_job_columns()
+        return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
 
     def _get_label_columns(self) -> List[str]:
-        return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
+        return self._get_cpu_utilization_columns()
+        # return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
 
 class ForecastDataset(GPUDataset):
@@ -250,14 +269,13 @@ if __name__ == '__main__':
     # std_dataset = test_dataset._standardize_df(std_dataset)
     # print(std_dataset.head())
 
-    # test_dataset = GPUDataset(small_df=True)
-    # print(test_dataset.__class__.__name__,
-    #       test_dataset.X.shape, test_dataset.y.shape)
+    test_dataset = GPUDataset(small_df=True)
+    print(test_dataset.__class__.__name__,
+          test_dataset.X.shape, test_dataset.y.shape)
 
-    # test_dataset = UtilizationDataset(small_df=True)
-
-    # print(test_dataset.__class__.__name__,
-    #       test_dataset.X.shape, test_dataset.y.shape)
+    test_dataset = UtilizationDataset(small_df=True)
+    print(test_dataset.__class__.__name__,
+          test_dataset.X.shape, test_dataset.y.shape)
 
     # x = test_dataset.X
 
