@@ -21,18 +21,17 @@ class DataFrameScaler():
         self.df_data_types = None
 
         if df is not None:
-            self.df_columns = df.columns
-            # preserve datatypes of dataframe
-            self.df_data_types = df.dtypes.to_dict()
-            self.scaled_df_columns = self.get_scaled_columns(
-                df, filter_columns)
-
             self.fit(df)
 
     def fit(self, df: DataFrame) -> None:
+        self.df_columns = df.columns
+        # preserve datatypes of dataframe
+        self.df_data_types = df.dtypes.to_dict()
+        self.scaled_df_columns = self.get_scaled_columns(
+            df, self.filter_columns)
         self.std_dev_df = self._get_std_mean_df(df)
         self.norm_dev_df = self._get_norm_min_max_df(df)
-        
+
     def fit_transform_std(self, df: DataFrame) -> DataFrame:
         self.fit(df)
         return self.standardize_df(df)
@@ -40,8 +39,7 @@ class DataFrameScaler():
     def fit_transform_norm(self, df: DataFrame) -> DataFrame:
         self.fit(df)
         return self.normalize_df(df)
-        
-        
+
     def _get_std_mean_df(self, df: DataFrame) -> DataFrame:
         std_mean_df = DataFrame(
             index=[MEAN_KEY, STD_DEV_KEY], columns=self.scaled_df_columns)
@@ -69,7 +67,7 @@ class DataFrameScaler():
         df_c = df.copy()
         df_c.loc[:, std_columns] = df_c.loc[:, std_columns].apply(
             lambda x: ((x - self.std_dev_df.at[MEAN_KEY, x.name]) / self.std_dev_df.at[STD_DEV_KEY, x.name]))
-        
+
         return df_c
 
     def standardize_df_(self, df: DataFrame) -> DataFrame:
@@ -135,6 +133,8 @@ class DataFrameScaler():
         return DataFrame(data=t.numpy(), columns=self.df_columns)
 
     def get_scaled_columns(self, df: DataFrame, filter_columns) -> List[str]:
+        if filter_columns is None:
+            return df.columns.to_list()
         return list(filter(lambda column: column not in filter_columns, df.columns))
 
 
@@ -145,7 +145,6 @@ if __name__ == '__main__':
     df = DataFrame(arr)
     # df = df.astype({0: 'float64'})
 
-
     # print(df)
     df_scale = DataFrameScaler(df, [0, 4])
     # print(df_scale.std_dev_df)
@@ -153,7 +152,6 @@ if __name__ == '__main__':
     df_std = df_scale.standardize_df(df)
     df_norm = df_scale.normalize_df(df)
 
-    
     asdf = {x: 'int64' for x in range(5)}
     print(df_std)
     # print('---------------')
@@ -163,7 +161,7 @@ if __name__ == '__main__':
     # print('---------------')
     inv_std_df = df_scale.inverse_standardize_df(df_std)
     print(inv_std_df)
-       
+
     # print('---------------')
     # print(df_scale._inverse_normalization_df(df_norm))
 
