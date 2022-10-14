@@ -128,14 +128,18 @@ class DataFrameScaler():
 
         return df
 
-    def convert_tensor_to_df(self, t: Tensor) -> DataFrame:
-        t.squeeze_()  # remove dimensions with size 1
-        return DataFrame(data=t.numpy(), columns=self.df_columns)
-
     def get_scaled_columns(self, df: DataFrame, filter_columns) -> List[str]:
         if filter_columns is None:
             return df.columns.to_list()
         return list(filter(lambda column: column not in filter_columns, df.columns))
+    
+    def convert_tensor_to_df(self, t: Tensor) -> DataFrame:
+        t.squeeze_()  # remove dimensions with size 1
+        return DataFrame(data=t.numpy(), columns=self.df_columns)
+    
+    def convert_numpy_to_df(self, numpy_arr: np.ndarray) -> DataFrame:
+        return DataFrame(data=numpy_arr, columns=self.df_columns)
+
 
 
 if __name__ == '__main__':
