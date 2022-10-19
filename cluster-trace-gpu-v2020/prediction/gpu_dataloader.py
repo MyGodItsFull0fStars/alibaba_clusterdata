@@ -173,6 +173,8 @@ class UtilizationDataset(GPUDataset):
     def _init_data_tensors(self, df: pd.DataFrame) -> Tuple[Tensor, Tensor]:
 
         X_df = df[self._get_feature_columns()]
+        X_df[self.get_cap_cpu_columns()] = X_df[self.get_cap_cpu_columns()] * 100       
+        
         y_df = df[self._get_label_columns()]
 
         self.X_scaler = DataFrameScaler(X_df, self._get_job_columns())
@@ -184,7 +186,8 @@ class UtilizationDataset(GPUDataset):
         return X_tens, y_tens
 
     def _get_feature_columns(self) -> List[str]:
-        return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
+        # return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
+        return self._get_plan_cpu_columns() + self.get_cap_cpu_columns()
 
     def _get_label_columns(self) -> List[str]:
         return self._get_cpu_utilization_columns()
