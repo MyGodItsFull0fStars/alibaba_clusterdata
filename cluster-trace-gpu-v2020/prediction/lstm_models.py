@@ -56,11 +56,11 @@ class LSTM(nn.Module):
         out = hn.view(-1, self.hidden_size * self.bidirectional_mult)
         # out = self.relu(hn[0])
         out = self.fc_1(out)
-        out = self.dropout(out)
+        # out = self.dropout(out)
         out = self.relu(out)
 
         out = self.fc_2(out)
-        out = self.dropout(out)
+        # out = self.dropout(out)
         out = self.relu(out)
         out = self.fc_3(out)
         
