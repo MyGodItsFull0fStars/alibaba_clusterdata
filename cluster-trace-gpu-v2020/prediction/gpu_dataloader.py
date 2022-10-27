@@ -87,7 +87,13 @@ class GPUDataset(Dataset):
         return ['cpu_usage']
 
     def _get_mem_utilization_columns(self) -> List[str]:
-        return ['avg_mem', 'max_mem']
+        return self.get_avg_mem_utilization_column() + self.get_max_mem_utilization_column()
+    
+    def get_avg_mem_utilization_column(self) -> List[str]:
+        return ['avg_mem']
+    
+    def get_max_mem_utilization_column(self) -> List[str]:
+        return ['max_mem']
 
     def _get_gpu_utilization_columns(self) -> List[str]:
         return ['gpu_wrk_util',
@@ -130,7 +136,7 @@ class GPUDataset(Dataset):
             data_index = 'start_date'
         return data_index
 
-    def _resize_df(self, df: pd.DataFrame, split_index: int = 2000) -> pd.DataFrame:
+    def _resize_df(self, df: pd.DataFrame, split_index: int = 4000) -> pd.DataFrame:
         if self.small_df:
             return df.iloc[:split_index]
         else:
@@ -173,24 +179,26 @@ class UtilizationDataset(GPUDataset):
     def _init_data_tensors(self, df: pd.DataFrame) -> Tuple[Tensor, Tensor]:
 
         X_df = df[self._get_feature_columns()]
-        X_df[self.get_cap_cpu_columns()] = X_df[self.get_cap_cpu_columns()] * 100       
+        X_df[self.get_cap_cpu_columns()] = X_df[self.get_cap_cpu_columns()]  
         
         y_df = df[self._get_label_columns()]
 
         self.X_scaler = DataFrameScaler(X_df, self._get_job_columns())
         self.y_scaler = DataFrameScaler(y_df, self._get_job_columns())
 
-        X_tens, y_tens = self._transform_dfs_to_tensors(
-            self.X_scaler.standardize_df(X_df), self.y_scaler.normalize_df(y_df))
+        X_df = self.X_scaler.standardize_df(X_df)
+        y_df = self.y_scaler.normalize_df(y_df)
+        
+        X_tens, y_tens = self._transform_dfs_to_tensors(X_df, y_df)
 
         return X_tens, y_tens
 
     def _get_feature_columns(self) -> List[str]:
         # return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
-        return self._get_plan_cpu_columns() + self.get_cap_cpu_columns()
+        return self._get_plan_cpu_columns() + self.get_cap_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_mem_columns()
 
     def _get_label_columns(self) -> List[str]:
-        return self._get_cpu_utilization_columns()
+        return self._get_cpu_utilization_columns() + self.get_avg_mem_utilization_column()
         # return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
 
@@ -253,7 +261,7 @@ class ForecastDataset(GPUDataset):
                 [y_df, df.iloc[label_start_index:label_end_index]])
 
         X_df, y_df = self.__filter_columns(X_df, y_df)
-        # X_df, y_df = self.__scale_dfs(X_df, y_df)
+        
         X_df = self.X_scaler.fit_transform_std(X_df)
         y_df = self.y_scaler.fit_transform_norm(y_df)
 
@@ -268,23 +276,18 @@ class ForecastDataset(GPUDataset):
 
 if __name__ == '__main__':
 
-    # std_dataset = test_dataset._read_csv()
-    # std_dataset = test_dataset._standardize_df(std_dataset)
-    # print(std_dataset.head())
+    # test_dataset = GPUDataset(small_df=True)
+    # print(test_dataset.__class__.__name__,
+    #       test_dataset.X.shape, test_dataset.y.shape)
 
-    test_dataset = GPUDataset(small_df=True)
+    test_dataset = UtilizationDataset(small_df=False)
     print(test_dataset.__class__.__name__,
           test_dataset.X.shape, test_dataset.y.shape)
+    
 
-    test_dataset = UtilizationDataset(small_df=True)
-    print(test_dataset.__class__.__name__,
-          test_dataset.X.shape, test_dataset.y.shape)
-
-    # x = test_dataset.X
-
-    test_dataset = ForecastDataset(small_df=True)
-    print(test_dataset.__class__.__name__,
-          test_dataset.X.shape, test_dataset.y.shape)
+    # test_dataset = ForecastDataset(small_df=True)
+    # print(test_dataset.__class__.__name__,
+    #       test_dataset.X.shape, test_dataset.y.shape)
     # dataset = GPUDataset(is_training=True, small_df=True)
     # print(dataset.X.shape, dataset.y.shape)
     # print(dataset.X)
