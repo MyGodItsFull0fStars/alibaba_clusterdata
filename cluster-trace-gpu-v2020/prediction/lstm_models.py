@@ -1,3 +1,5 @@
+from turtle import forward
+from typing import Tuple
 from unicodedata import bidirectional
 from webbrowser import get
 import torch
@@ -16,7 +18,7 @@ device = get_device()
 # https://github.com/pytorch/examples/blob/main/time_sequence_prediction/train.py
 class LSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int, bidirectional: bool = True) -> None:
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int, bidirectional: bool = False) -> None:
         super(LSTM, self).__init__()
         self.num_classes: int = num_classes
         self.input_size: int = input_size
@@ -72,7 +74,51 @@ class LSTM(nn.Module):
         
         return (hidden_state, internal_state)
 
+class UtilizationLSTM(nn.Module):
     
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int) -> None:
+        super(UtilizationLSTM, self).__init__()
+        self.num_classes: int = num_classes
+        self.input_size: int = input_size
+        self.hidden_size: int = hidden_size
+        self.num_layers: int = num_layers
+        self.seq_length: int = seq_length
+        
+        # long-short term memory layer to predict cpu usage
+        self.cpu_lstm = nn.LSTM(
+            input_size=input_size - 2,
+            hidden_size=hidden_size,
+            bidirectional=self.bidirectional,
+            batch_first=True,
+        ).to(device)
+        
+        # long-short term memory layer to predict memory usage
+        self.mem_lstm = nn.LSTM(
+            input_size=input_size - 2,
+            hidden_size=hidden_size,
+            bidirectional=self.bidirectional,
+            batch_first=True,
+        ).to(device)
+        
+        
+        # first fully connected layer
+        self.fc_1 = nn.Linear(hidden_size, 512).to(device)
+        # second fully connected layer
+        self.fc_2 = nn.Linear(512, 256).to(device)
+        # thrid fully connected layer
+        self.fc_3 = nn.Linear(256, num_classes).to(device)
+        # activation function
+        self.relu = nn.LeakyReLU().to(device)
+        
+        
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return torch.Tensor()
+    
+    def get_hidden_internal_state(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        hidden_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
+        internal_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
+        
+        return (hidden_state, internal_state)
 
 if __name__ == '__main__':
     
