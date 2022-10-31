@@ -1,5 +1,6 @@
 import pandas as pd
 import torch
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def get_df(file: str, header=None, sample: bool = False, sample_number: int = 1000):
     if sample:
@@ -17,3 +18,19 @@ def get_device() -> torch.device:
 
 def get_device_as_string() -> str:
     return 'cuda' if torch.cuda.is_available() else 'cpu'
+
+import math
+
+def get_rmse(actual_values, predicted_values) -> float:
+    '''returns the root mean squared error'''
+    return math.sqrt(mean_squared_error(actual_values, predicted_values))
+
+
+def get_mape(actual_values, predicted_values):
+    '''returns the mean absolue percentage error'''
+    return np.mean(np.abs(actual_values - predicted_values) / np.abs(actual_values) * 100)
+
+
+def get_mae(actual_values, predicted_values) -> float:
+    '''returns the mean absolute error'''
+    return mean_absolute_error(actual_values, predicted_values)
