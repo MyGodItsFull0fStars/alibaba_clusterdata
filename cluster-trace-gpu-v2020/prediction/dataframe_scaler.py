@@ -1,4 +1,5 @@
-from typing import List
+from tkinter.messagebox import NO
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -132,15 +133,72 @@ class DataFrameScaler():
         if filter_columns is None:
             return df.columns.to_list()
         return list(filter(lambda column: column not in filter_columns, df.columns))
-    
+
     def convert_tensor_to_df(self, t: Tensor) -> DataFrame:
         t.squeeze_()  # remove dimensions with size 1
         return DataFrame(data=t.numpy(), columns=self.df_columns)
-    
+
     def convert_numpy_to_df(self, numpy_arr: np.ndarray) -> DataFrame:
         return DataFrame(data=numpy_arr, columns=self.df_columns)
 
 
+class DataFrameStdScaler(DataFrameScaler):
+
+    def __init__(self, df: DataFrame = None, filter_columns=None) -> None:  # type: ignore
+
+        self.filter_columns = filter_columns
+        self.df_data_types = None
+
+        if df is not None:
+            self.fit(df)
+
+    def fit(self, df: DataFrame) -> None:
+        self.df_columns = df.columns
+        # preserve datatypes of dataframe
+        self.df_data_types = df.dtypes.to_dict()
+        self.scaled_df_columns = self.get_scaled_columns(
+            df, self.filter_columns)
+        self.std_dev_df = self._get_std_mean_df(df)
+
+    def fit_transform(self, df: DataFrame) -> DataFrame:
+        self.fit(df)
+        return self.standardize_df(df)
+
+    def inverse_transformation(self, data: Tuple[Tensor, DataFrame, np.ndarray]) -> DataFrame:
+        temp_df = DataFrame()
+        if type(data) == Tensor:
+            temp_df = self.convert_tensor_to_df(data)
+        elif type(data) == np.ndarray:
+            temp_df = self.convert_numpy_to_df(data)
+        elif type(data) == DataFrame:
+            temp_df = data
+
+        return self.inverse_standardize_df(temp_df).astype(self.df_data_types)
+    
+    
+class DataFrameNormScaler(DataFrameScaler):
+    
+    def __init__(self, df: DataFrame = None, filter_columns=None) -> None:
+        super().__init__(df, filter_columns)
+        
+    def fit(self, df: DataFrame) -> None:
+        self.df_columns = df.columns
+        # preserve datatypes of dataframe
+        self.df_data_types = df.dtypes.to_dict()
+        self.scaled_df_columns = self.get_scaled_columns(
+            df, self.filter_columns)
+        self.norm_dev_df = self._get_norm_min_max_df(df)
+
+    def inverse_transformation(self, data: Tuple[Tensor, DataFrame, np.ndarray]) -> DataFrame:
+        temp_df = DataFrame()
+        if type(data) == Tensor:
+            temp_df = self.convert_tensor_to_df(data)
+        elif type(data) == np.ndarray:
+            temp_df = self.convert_numpy_to_df(data)
+        elif type(data) == DataFrame:
+            temp_df = data
+
+        return self.inverse_normalization_df(temp_df).astype(self.df_data_types)
 
 if __name__ == '__main__':
 
