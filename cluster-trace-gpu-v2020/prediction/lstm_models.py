@@ -90,8 +90,6 @@ class UtilizationLSTM(nn.Module):
         self.hidden_size: int = hidden_size
         self.num_layers = num_layers
         self.future: int = future
-        # self.num_layers: int = num_layers
-        # self.seq_length: int = seq_length
 
         # long-short term memory layer to predict cpu usage
         self.cpu_lstm = nn.LSTM(
@@ -130,6 +128,7 @@ class UtilizationLSTM(nn.Module):
 
         # Concat the two tensors column-wise
         output = torch.cat([cpu_out, mem_out], dim=1)
+        output = output[(self.num_layers - 1) * input.size(0):]
 
         return output
 
@@ -178,5 +177,5 @@ if __name__ == '__main__':
 
     # lstm.forward(test_tensor)
 
-    lstm = UtilizationLSTM(num_classes, input_size, hidden_size)
-    lstm(test_tensor)
+    lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=3)
+    print(lstm(test_tensor).shape)
