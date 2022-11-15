@@ -189,6 +189,11 @@ class UtilizationDataset(GPUDataset):
         X_df = self.X_scaler.standardize_df(X_df)
         y_df = self.y_scaler.normalize_df(y_df)
         
+        # X_df.to_csv(f'./datasets/standardized_feature_df.csv')
+        # y_df.to_csv(f'./datasets/normalized_label_df.csv')
+        # self.X_scaler.std_dev_df.to_csv(f'./datasets/standard_feature_df.csv')
+        # self.y_scaler.norm_dev_df.to_csv(f'./datasets/norm_label_df.csv')
+        
         X_tens, y_tens = self._transform_dfs_to_tensors(X_df, y_df)
 
         return X_tens, y_tens
