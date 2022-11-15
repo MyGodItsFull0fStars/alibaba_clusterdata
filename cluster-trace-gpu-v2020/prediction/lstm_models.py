@@ -115,30 +115,23 @@ class UtilizationLSTM(nn.Module):
         cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
-        cpu_output, (cpu_h1, cpu_c1) = self.cpu_lstm(cpu_input,
+        cpu_output, (cpu_ht, cpu_ct) = self.cpu_lstm(cpu_input,
                                        self.get_hidden_internal_state(input))
-        mem_output, (mem_h1, mem_c1) = self.mem_lstm(mem_input,
+        mem_output, (mem_ht, mem_ct) = self.mem_lstm(mem_input,
                                        self.get_hidden_internal_state(input))
-
+               
         # Reshaping the data for the Dense layer
-        cpu_h1 = cpu_h1.view(-1, self.hidden_size)
-        mem_h1 = mem_h1.view(-1, self.hidden_size)
+        cpu_ht = cpu_ht.view(-1, self.hidden_size)
+        mem_ht = mem_ht.view(-1, self.hidden_size)
 
-        cpu_out: torch.Tensor = self.cpu_lstm_seq(cpu_h1)
-        mem_out: torch.Tensor = self.mem_lstm_seq(mem_h1)
+        cpu_out: torch.Tensor = self.cpu_lstm_seq(cpu_ht)
+        mem_out: torch.Tensor = self.mem_lstm_seq(mem_ht)
 
         # Concat the two tensors column-wise
         output = torch.cat([cpu_out, mem_out], dim=1)
-        output = output[(self.num_layers - 1) * input.size(0):]
         
-        '''
-        for i in range(future):# if we should predict the future
-            h_t, c_t = self.lstm1(output, (h_t, c_t))
-            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
-            output = self.linear(h_t2)
-            outputs += [output]
-        outputs = torch.cat(outputs, dim=1)
-        return outputs'''
+        # Only use the last stacked lstm layer as output
+        output = output[(self.num_layers - 1) * input.size(0):]
 
         return output
 
@@ -149,6 +142,21 @@ class UtilizationLSTM(nn.Module):
         return (hidden_state, internal_state)
 
     def split_input(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Splits the Input Tensor into two Tensors.
+            - CPU Tensor:
+                - Indices: [0, 1] + (if more than 4 columns) [3, ...]
+                - Shape: Same as input tensor but without the memory columns [2, 3]
+            - MEM Tensor: 
+                - Indices: [2, 3] + (if more than 4 columns) [3, ...]
+                - Shape: Same as input tensor but without the cpu columns [0, 1]
+
+        Args:
+            input (torch.Tensor): The input tensor consisting of at least 4 columns `['plan_cpu', 'cap_cpu', 'plan_mem', 'cap_mem']`
+                                  The tensor can also include additional information about each task, that can be appended starting at column 3.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Returns the two tensors (CPU_input, MEM_input)
+        """
         if input.size(dim=2) < 4:
             return torch.empty(1), torch.empty(1)
         
@@ -179,7 +187,7 @@ class UtilizationLSTM(nn.Module):
 
 if __name__ == '__main__':
 
-    test_tensor = torch.ones([300, 1, 19], dtype=torch.float32).to(device)
+    test_tensor = torch.ones([300, 1, 5], dtype=torch.float32).to(device)
     # test_tensor = torch.ones([1000, 1, 8], dtype=torch.float32).to(device)
     
     for i in range(test_tensor.size(2)):
@@ -188,7 +196,7 @@ if __name__ == '__main__':
     # number of features
     input_size: int = test_tensor.shape[2]
     # number of features in hidden state
-    hidden_size: int = test_tensor.shape[2] * 400
+    hidden_size: int = test_tensor.shape[2] * 2**8
     # number of stacked lstm layers
     num_layers: int = 3
     # number of output classes
@@ -198,8 +206,8 @@ if __name__ == '__main__':
 
     # lstm.forward(test_tensor)
 
-    lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=3)
-    # # print(lstm(test_tensor).shape)
+    lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=3, future=2)
+    lstm.forward(test_tensor)
     
     output = lstm.split_input(test_tensor)
     print(output[0].shape, output[1].shape)
