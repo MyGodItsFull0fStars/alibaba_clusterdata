@@ -9,13 +9,14 @@ from utils import get_device
 
 device = get_device()
 
+# https://github.com/pytorch/examples/blob/main/time_sequence_prediction/train.py
+
 # https://blog.floydhub.com/long-short-term-memory-from-zero-to-hero-with-pytorch/
 # https://medium.com/unit8-machine-learning-publication/transfer-learning-for-time-series-forecasting-87f39e375278
 # https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
 # https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66
 # https://www.crosstab.io/articles/time-series-pytorch-lstm
 # https://www.kaggle.com/code/omershect/learning-pytorch-lstm-deep-learning-with-m5-data/notebook
-# https://github.com/pytorch/examples/blob/main/time_sequence_prediction/train.py
 
 
 class LSTM(nn.Module):
@@ -114,9 +115,9 @@ class UtilizationLSTM(nn.Module):
         cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
-        _, (cpu_h1, _) = self.cpu_lstm(cpu_input,
+        cpu_output, (cpu_h1, cpu_c1) = self.cpu_lstm(cpu_input,
                                        self.get_hidden_internal_state(input))
-        _, (mem_h1, _) = self.mem_lstm(mem_input,
+        mem_output, (mem_h1, mem_c1) = self.mem_lstm(mem_input,
                                        self.get_hidden_internal_state(input))
 
         # Reshaping the data for the Dense layer
@@ -129,6 +130,15 @@ class UtilizationLSTM(nn.Module):
         # Concat the two tensors column-wise
         output = torch.cat([cpu_out, mem_out], dim=1)
         output = output[(self.num_layers - 1) * input.size(0):]
+        
+        '''
+        for i in range(future):# if we should predict the future
+            h_t, c_t = self.lstm1(output, (h_t, c_t))
+            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
+            output = self.linear(h_t2)
+            outputs += [output]
+        outputs = torch.cat(outputs, dim=1)
+        return outputs'''
 
         return output
 
@@ -139,8 +149,16 @@ class UtilizationLSTM(nn.Module):
         return (hidden_state, internal_state)
 
     def split_input(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        cpu_input, mem_input = input[:, :, 0:2], input[:, :, 2:]
+        if input.size(dim=2) < 4:
+            return torch.empty(1), torch.empty(1)
+        
+        cpu_columns, mem_columns = [0, 1], [2, 3]
+        
+        if input.size(dim=2) > 4:
+            cpu_columns = cpu_columns + [x for x in range(4, test_tensor.size(dim=2))]
+            mem_columns = mem_columns + [x for x in range(4, test_tensor.size(dim=2))]
 
+        cpu_input, mem_input = input[:, :, cpu_columns], input[:, :, mem_columns]
         return (cpu_input, mem_input)
 
     def init_sequential_layer(self, hidden_size: int) -> nn.Sequential:
@@ -161,8 +179,11 @@ class UtilizationLSTM(nn.Module):
 
 if __name__ == '__main__':
 
-    # test_tensor = torch.ones([300, 1, 19], dtype=torch.float32).to(device)
-    test_tensor = torch.ones([1000, 1, 4], dtype=torch.float32).to(device)
+    test_tensor = torch.ones([300, 1, 19], dtype=torch.float32).to(device)
+    # test_tensor = torch.ones([1000, 1, 8], dtype=torch.float32).to(device)
+    
+    for i in range(test_tensor.size(2)):
+        test_tensor[:, :, i] *= test_tensor[:, :, i] * (i)
 
     # number of features
     input_size: int = test_tensor.shape[2]
@@ -178,4 +199,7 @@ if __name__ == '__main__':
     # lstm.forward(test_tensor)
 
     lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=3)
-    print(lstm(test_tensor).shape)
+    # # print(lstm(test_tensor).shape)
+    
+    output = lstm.split_input(test_tensor)
+    print(output[0].shape, output[1].shape)
