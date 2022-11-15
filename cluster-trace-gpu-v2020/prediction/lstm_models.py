@@ -182,7 +182,7 @@ class UtilizationLSTM(nn.Module):
             nn.BatchNorm1d(hidden_size // 4),
 
             nn.Linear(hidden_size // 4, 1)
-        )
+        ).to(device)
 
 
 if __name__ == '__main__':
