@@ -160,8 +160,8 @@ class UtilizationLSTM(nn.Module):
         cpu_columns, mem_columns = [0, 1], [2, 3]
         
         if input.size(dim=2) > 4:
-            cpu_columns = cpu_columns + [x for x in range(4, test_tensor.size(dim=2))]
-            mem_columns = mem_columns + [x for x in range(4, test_tensor.size(dim=2))]
+            cpu_columns = cpu_columns + [x for x in range(4, input.size(dim=2))]
+            mem_columns = mem_columns + [x for x in range(4, input.size(dim=2))]
 
         cpu_input, mem_input = input[:, :, cpu_columns], input[:, :, mem_columns]
         return (cpu_input, mem_input)

@@ -161,12 +161,13 @@ class UtilizationDataset(GPUDataset):
         self,
         is_training: bool = True,
         data_index: str = 'start_date',
-        batch_size: int = 1000,
         future_step: int = 10,
-        small_df: bool = False
+        small_df: bool = False,
+        include_tasks: bool = False
     ) -> None:
         super(UtilizationDataset, self).__init__(is_training, data_index,
-                                                 batch_size, future_step, small_df)  # type: ignore
+                                                 1000, future_step, small_df)  # type: ignore
+        self.include_tasks = include_tasks
 
         self.X, self.y = self._prepare_data_tensors()
 
@@ -199,7 +200,8 @@ class UtilizationDataset(GPUDataset):
         return X_tens, y_tens
 
     def _get_feature_columns(self) -> List[str]:
-        # return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
+        if self.include_tasks == True:
+            return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
         return self._get_plan_cpu_columns() + self.get_cap_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_mem_columns()
 
     def _get_label_columns(self) -> List[str]:
@@ -285,7 +287,7 @@ if __name__ == '__main__':
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
 
-    test_dataset = UtilizationDataset(small_df=False)
+    test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
     print(test_dataset.__class__.__name__,
           test_dataset.X.shape, test_dataset.y.shape)
     
