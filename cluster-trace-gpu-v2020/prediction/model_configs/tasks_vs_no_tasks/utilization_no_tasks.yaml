@@ -1,3 +1,4 @@
+---
 dataset:
   small_df: True
   include_tasks: False
@@ -5,7 +6,7 @@ dataset:
 
 model:
   name: "Utilization LSTM Model without Tasks"
-  save_model: False
+  save_model: True
   num_epochs: 100
   learning_rate: 0.0001
   hidden_size: 3000
@@ -18,7 +19,7 @@ model:
     eps: 0.000000001
 
 evaluation_path:
-  save_to_file: False
+  save_to_file: True
   training_prediction_path: "../evaluation/task_vs_no_task/util_lstm_train_no_tasks.csv"
   test_prediction_path: "../evaluation/task_vs_no_task/util_lstm_test_no_tasks.csv"
 
