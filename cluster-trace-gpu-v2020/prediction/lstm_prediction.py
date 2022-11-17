@@ -1,12 +1,10 @@
 # %%
 from lstm_models import LSTM, UtilizationLSTM
 from gpu_dataloader import ForecastDataset, UtilizationDataset
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
 
 # plotting the data
 import matplotlib.pyplot as plt
@@ -20,7 +18,6 @@ from utils import get_device
 from loss_classes import RMSELoss
 
 import numpy as np
-%matplotlib inline
 
 from utils import get_device_as_string, get_device, get_rmse, get_mape, get_mae
 
@@ -33,8 +30,6 @@ with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
     print(yaml_config)
 
-# %%
-yaml_config['dataset']
 
 # %%
 batch_size: int = yaml_config['dataset']['batch_size']
