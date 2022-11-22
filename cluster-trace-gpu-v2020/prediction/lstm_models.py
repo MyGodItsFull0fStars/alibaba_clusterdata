@@ -168,8 +168,8 @@ class UtilizationLSTM(nn.Module):
 
     def init_sequential_layer(self, hidden_size: int) -> nn.Sequential:
         return nn.Sequential(
-            nn.LeakyReLU(),
-            nn.BatchNorm1d(hidden_size),
+            # nn.LeakyReLU(),
+            # nn.BatchNorm1d(hidden_size),
             nn.Linear(hidden_size, hidden_size // 2),
             nn.LeakyReLU(),
             nn.BatchNorm1d(hidden_size // 2),
@@ -178,7 +178,9 @@ class UtilizationLSTM(nn.Module):
             nn.LeakyReLU(),
             nn.BatchNorm1d(hidden_size // 4),
 
-            nn.Linear(hidden_size // 4, 1)
+            nn.Linear(hidden_size // 4, 1), 
+            
+            nn.ReLU()
         ).to(device)
 
 
