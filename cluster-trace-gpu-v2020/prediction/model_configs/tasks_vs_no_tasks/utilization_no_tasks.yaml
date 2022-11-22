@@ -20,6 +20,6 @@ model:
 
 evaluation_path:
   save_to_file: True
-  training_prediction_path: "../evaluation/task_vs_no_task/util_lstm_train_no_tasks.csv"
-  test_prediction_path: "../evaluation/task_vs_no_task/util_lstm_test_no_tasks.csv"
+  training_prediction_path: "evaluation/task_vs_no_task/util_lstm_train_no_tasks.csv"
+  test_prediction_path: "evaluation/task_vs_no_task/util_lstm_test_no_tasks.csv"
 
