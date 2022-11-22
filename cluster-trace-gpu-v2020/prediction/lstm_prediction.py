@@ -1,10 +1,12 @@
 # %%
 from lstm_models import LSTM, UtilizationLSTM
 from gpu_dataloader import ForecastDataset, UtilizationDataset
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
 import torch.nn as nn
 import torch
-
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 # plotting the data
 import matplotlib.pyplot as plt
@@ -30,14 +32,12 @@ with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
     print(yaml_config)
 
-
 # %%
 batch_size: int = yaml_config['dataset']['batch_size']
 small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
 
 # %%
-
 dataset = UtilizationDataset(small_df=small_df, include_tasks=include_tasks)
 test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks)
 
@@ -191,8 +191,8 @@ for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Los
 
 
 # %%
-loss_df = pd.DataFrame(data=loss_progression)
-loss_df.plot.line()
+# loss_df = pd.DataFrame(data=loss_progression)
+# loss_df.plot.line()
 
 # %%
 import time
@@ -252,17 +252,104 @@ actual_data_df = dataset.y_scaler.inverse_normalization_df(actual_data_df)
 plan = X_df.cpu()
 plan_df = dataset.X_scaler.convert_tensor_to_df(plan)
 plan_df = dataset.X_scaler.inverse_standardize_df(plan_df)
-plan_df = plan_df[['plan_cpu']]
+plan_df = plan_df[['plan_cpu', 'plan_mem']]
+
+# %%
+
+rename_columns_dict: dict = {
+    'cpu_usage_x': 'actual cpu usage', 
+    'cpu_usage_y': 'predicted cpu usage', 
+    'plan_cpu': 'allocated cpu',
+    'avg_mem_x': 'actual mem usage',
+    'avg_mem_y': 'predicted mem usage',
+    'plan_mem': 'allocated mem'
+    }
+
+# %% [markdown]
+# ## Calculate Root Mean Squared Error
+# 
+# Calculating the RMSE for the overall prediction of the (training) dataset.
+
+# %%
+rmse_key: str = 'Root Mean Squared Error (Overall - Training)'
+rmse_result = get_rmse(actual_data_df[:], prediction_df[:])
+print(f'Test Score: {rmse_result:.2f} RMSE')
+if INCLUDE_WANDB:
+    wandb.summary[rmse_key] = rmse_result
+
+# %% [markdown]
+# ## Calculate Mean Absolute Error
+# 
+# Calcutlate the MAE for the overall prediction of the (training) dataset.
+
+# %%
+mae_key: str = 'Mean Absolute Error (Overall - Training)'
+mae_result = mean_absolute_error(actual_data_df[:], prediction_df[:])
+print(f'Test Score: {mae_result} MAE')
+
+if INCLUDE_WANDB:
+    wandb.summary[mae_key] = mae_result
 
 # %%
 combined_df = pd.merge(actual_data_df, prediction_df, left_index=True, right_index=True)
 # combined_df.rename()
-combined_df['plan_cpu'] = plan_df
+combined_df[['plan_cpu', 'plan_mem']] = plan_df
 
-combined_df = combined_df.rename(columns={'cpu_usage_x': 'actual cpu usage', 'cpu_usage_y': 'predicted cpu usage', 'plan_cpu': 'allocated cpu'})
+combined_df = combined_df.rename(columns=rename_columns_dict)
+
+combined_df['rmse'] = rmse_result
+combined_df['mae'] = mae_result
 
 if yaml_config['evaluation_path']['save_to_file']:
-    combined_df.to_csv(yaml_config['save_path']['training_prediction_path'])
+    combined_df.to_csv(yaml_config['evaluation_path']['training_prediction_path'])
+
+# %%
+def plot_column(actual_values=actual_data_df, predicted_values=prediction_df, column_number: int = 0, rmse_threshold: float = 0.30, is_training: bool = True):
+
+    if len(label_columns) <= column_number:
+        print('Out of Prediction Bounds')
+        return
+
+    plt.figure(figsize=(25, 15))  # plotting
+    plt.rcParams.update({'font.size': 22})
+
+    column = label_columns[column_number]
+    pred_column = f"pred_{column}_{'training' if is_training else 'test'}"
+
+    rmse = get_rmse(actual_values[column], predicted_values[column])
+    mae = mean_absolute_error(actual_values[column], predicted_values[column])
+
+    predicted_color = 'green' if rmse < rmse_threshold else 'orange'
+
+    plt.plot(actual_values[column], label=column, color='black')  # actual plot
+    plt.plot(predicted_values[column], label='pred_' +
+             column, color=predicted_color)  # predicted plot
+
+    plt.title('Time-Series Prediction')
+    plt.plot([], [], ' ', label=f'RMSE: {rmse}')
+    plt.plot([], [], ' ', label=f'MAE: {mae}')
+    plt.legend()
+    plt.ylabel('timeline', fontsize=25)
+    
+    if INCLUDE_WANDB:
+        wandb.log({pred_column: wandb.Image(plt)})
+        wandb.summary[f'Root Mean Squared Error ({column})'] = rmse
+        wandb.summary[f'Mean Absolute Error ({column})'] = mae
+        
+    plt.show()
+
+
+# %% [markdown]
+# ## See Predictions on Training Dataset
+
+# %%
+# for idx in range(0, len(label_columns)):
+#     plot_column(actual_values=actual_data_df, predicted_values=prediction_df, column_number=idx)
+
+# %% [markdown]
+# ## Test Set Analysis
+# 
+# Below, the test set will be loaded and the model evaluated with it to see the actual performance.
 
 # %%
 lstm.eval()
@@ -293,14 +380,34 @@ actual_data_df = dataset.y_scaler.inverse_normalization_df(actual_data_df)
 plan = X_df.cpu()
 plan_test_df = test_set.X_scaler.convert_tensor_to_df(plan)
 plan_test_df = test_set.X_scaler.inverse_standardize_df(plan_test_df)
-plan_test_df = plan_df[['plan_cpu']]
+plan_test_df = plan_df[['plan_cpu', 'plan_mem']]
+
+# %%
+rmse_key: str = 'Root Mean Squared Error (Overall - Test)'
+rmse_result = get_rmse(actual_data_df[:], prediction_df[:])
+print(f'Test Score: {rmse_result:.2f} RMSE')
+
+if INCLUDE_WANDB:
+    wandb.summary[rmse_key] = rmse_result
+
+# %%
+mae_key: str = 'Mean Absolute Error (Overall - Test)'
+mae_result = mean_absolute_error(actual_data_df[:], prediction_df[:])
+print(f'Test Score: {mae_result} MAE')
+if INCLUDE_WANDB:
+    wandb.summary[mae_key] = mae_result
 
 # %%
 combined_test_df = pd.merge(actual_data_df, prediction_df, left_index=True, right_index=True)
 # combined_df.rename()
-combined_test_df['plan_cpu'] = plan_test_df 
+combined_test_df[['plan_cpu', 'plan_mem']] = plan_test_df 
 
-combined_test_df = combined_test_df.rename(columns={'cpu_usage_x': 'actual cpu usage', 'cpu_usage_y': 'predicted cpu usage', 'plan_cpu': 'allocated cpu'})
+combined_test_df = combined_test_df.rename(columns=rename_columns_dict)
+
+combined_test_df['rmse'] = rmse_result
+combined_test_df['mae'] = mae_result
 
 if yaml_config['evaluation_path']['save_to_file']:
-    combined_test_df.to_csv(yaml_config['save_path']['test_prediction_path'])
+    combined_test_df.to_csv(yaml_config['evaluation_path']['test_prediction_path'])
+
+
