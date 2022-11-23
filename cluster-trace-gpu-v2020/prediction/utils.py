@@ -1,6 +1,8 @@
 import math
 from typing import List
 
+import time
+
 import numpy as np
 import pandas as pd
 import torch
@@ -30,7 +32,11 @@ def get_device_as_string() -> str:
         cuda_devices = get_available_cuda_devices()
         # if more than one gpu are available, use all of them
         if len(cuda_devices) > 1:
-            return 'cuda'
+            time.sleep(1)
+            if len(cuda_devices) == len(get_available_cuda_devices()):
+                return 'cuda'
+            else:
+                return cuda_devices[0]
         else:
         # if only one gpu is available, return the cuda id (cuda:0) of it
             return cuda_devices[0]
