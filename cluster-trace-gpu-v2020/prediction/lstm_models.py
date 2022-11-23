@@ -131,7 +131,8 @@ class UtilizationLSTM(nn.Module):
         # Only use the last stacked lstm layer as output
         output = output[(self.num_layers - 1) * input.size(0):]
 
-        return output
+
+        return torch.abs(output)
 
     def get_hidden_internal_state(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
@@ -181,7 +182,7 @@ class UtilizationLSTM(nn.Module):
 
             nn.Linear(hidden_size // 4, 1), 
             
-            nn.ReLU()
+            
         ).to(device)
 
 
