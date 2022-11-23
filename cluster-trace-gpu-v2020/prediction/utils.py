@@ -73,3 +73,4 @@ def get_available_cuda_devices(free_mem_threshold: float = 0.90) -> List[str]:
 if '__main__' == __name__:
     print(get_available_cuda_devices())
     print(get_device_as_string())
+    print(get_device())
