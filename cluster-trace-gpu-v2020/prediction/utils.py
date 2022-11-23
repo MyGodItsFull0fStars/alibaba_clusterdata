@@ -32,7 +32,6 @@ def get_device_as_string() -> str:
         cuda_devices = get_available_cuda_devices()
         # if more than one gpu are available, use all of them
         if len(cuda_devices) > 1:
-            time.sleep(1)
             if len(cuda_devices) == len(get_available_cuda_devices()):
                 return 'cuda'
             else:
@@ -66,6 +65,7 @@ def get_available_cuda_devices(free_mem_threshold: float = 0.90) -> List[str]:
     
     elif torch.cuda.is_available():
         nvidia_smi.nvmlInit()
+        time.sleep(1)
         device_count = nvidia_smi.nvmlDeviceGetCount()
         
         for idx in range(device_count):

@@ -200,7 +200,6 @@ for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Los
 import time
 
 current_time = time.ctime()
-current_time
 
 # %% [markdown]
 # ## Save the Model to Disk
@@ -233,7 +232,7 @@ X_df = X_df.to(device)
 # forward pass
 prediction = lstm(X_df)
 # prediction = prediction.reshape(1, -1)
-if torch.has_cuda:
+if torch.cuda.is_available():
     prediction = prediction.cpu().detach().numpy()
 else:
     prediction = prediction.data.numpy()
@@ -360,7 +359,7 @@ X_df = test_set.X
 X_df = X_df.to(device)
 # forward pass
 prediction = lstm(X_df)
-if get_device_as_string() == 'cuda' or get_device_as_string() == 'mps':
+if torch.cuda.is_available():
     prediction = prediction.cpu().data.numpy()
 else:
     prediction = prediction.data.numpy()
