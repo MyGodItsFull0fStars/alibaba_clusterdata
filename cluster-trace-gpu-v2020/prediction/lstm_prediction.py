@@ -97,7 +97,7 @@ lstm
 # mean square error for regression
 # nn.
 criterion = nn.MSELoss()
-criterion = criterion.to(get_device())
+criterion = criterion.to(device)
 # criterion = RMSELoss()
 # criterion = criterion.to(device)
 # optimizer function

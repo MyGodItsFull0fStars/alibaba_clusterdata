@@ -20,7 +20,9 @@ def get_df(file: str, header=None, sample: bool = False, sample_number: int = 10
 
 
 def get_device() -> torch.device:
-    return torch.device(get_device_as_string())
+    device_as_string = get_device_as_string()
+    print(device_as_string)
+    return torch.device(device_as_string)
 
 
 def get_device_as_string() -> str:
