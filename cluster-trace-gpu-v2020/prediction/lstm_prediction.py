@@ -94,8 +94,6 @@ if INCLUDE_WANDB:
 # nn.
 criterion = nn.MSELoss()
 criterion = criterion.to(device)
-# criterion = RMSELoss()
-# criterion = criterion.to(device)
 # optimizer function
 optimizer = torch.optim.AdamW(lstm.parameters(), lr=learning_rate)
 

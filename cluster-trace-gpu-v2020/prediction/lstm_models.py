@@ -30,6 +30,8 @@ class LSTM(nn.Module):
 
         self.bidirectional = bidirectional
         self.bidirectional_mult: int = 2 if self.bidirectional else 1
+        
+        self.device = device
 
         # long-short term memory layer
         self.lstm = nn.LSTM(
@@ -87,6 +89,8 @@ class UtilizationLSTM(nn.Module):
         self.hidden_size: int = hidden_size
         self.num_layers = num_layers
         self.future: int = future
+        
+        self.device = device
 
         # long-short term memory layer to predict cpu usage
         self.cpu_lstm = nn.LSTM(
