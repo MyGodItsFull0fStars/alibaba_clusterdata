@@ -26,10 +26,13 @@ def get_device() -> torch.device:
 def get_device_as_string() -> str:
     if torch.cuda.is_available():
         cuda_devices = get_available_cuda_devices()
+        # if more than one gpu are available, use all of them
         if len(cuda_devices) > 1:
             return 'cuda'
         else:
+        # if only one gpu is available, return the cuda id (cuda:0) of it
             return cuda_devices[0]
+    # if no gpu available, use cpu instead
     return 'cpu'
 
 
