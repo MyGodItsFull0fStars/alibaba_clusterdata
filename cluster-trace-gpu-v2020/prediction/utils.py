@@ -1,7 +1,10 @@
-import pandas as pd
+import math
+
 import numpy as np
+import pandas as pd
 import torch
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
 
 def get_df(file: str, header=None, sample: bool = False, sample_number: int = 1000):
     if sample:
@@ -20,7 +23,7 @@ def get_device() -> torch.device:
 def get_device_as_string() -> str:
     return 'cuda' if torch.cuda.is_available() else 'cpu'
 
-import math
+
 
 def get_rmse(actual_values, predicted_values) -> float:
     '''returns the root mean squared error'''
