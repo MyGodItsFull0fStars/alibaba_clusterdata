@@ -50,10 +50,10 @@ def get_mae(actual_values, predicted_values) -> float:
 
 def get_available_cuda_devices(free_mem_threshold: float = 0.90) -> List[str]:
     available_gpus: List[str] = []
-    if get_device_as_string() == 'cpu':
+    if torch.cuda.is_available() == False:
         print('No CUDA device available')
     
-    elif get_device_as_string() == 'cuda':
+    elif torch.cuda.is_available():
         nvidia_smi.nvmlInit()
         device_count = nvidia_smi.nvmlDeviceGetCount()
         
