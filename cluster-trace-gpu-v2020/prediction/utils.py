@@ -24,7 +24,13 @@ def get_device() -> torch.device:
 
 
 def get_device_as_string() -> str:
-    return 'cuda' if torch.cuda.is_available() else 'cpu'
+    if torch.cuda.is_available():
+        cuda_devices = get_available_cuda_devices()
+        if len(cuda_devices) > 1:
+            return 'cuda'
+        else:
+            return cuda_devices[0]
+    return 'cpu'
 
 
 def get_rmse(actual_values, predicted_values) -> float:
