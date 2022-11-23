@@ -30,7 +30,7 @@ from yaml.loader import SafeLoader
 # Open the file and load the file
 with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
-    print(yaml_config)
+    # print(yaml_config)
 
 # %%
 batch_size: int = yaml_config['dataset']['batch_size']

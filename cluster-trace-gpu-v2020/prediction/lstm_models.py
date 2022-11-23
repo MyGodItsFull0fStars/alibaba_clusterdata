@@ -15,6 +15,7 @@ device = get_device()
 # https://www.crosstab.io/articles/time-series-pytorch-lstm
 # https://www.kaggle.com/code/omershect/learning-pytorch-lstm-deep-learning-with-m5-data/notebook
 
+print(f'lstm {device.index}')
 
 class LSTM(nn.Module):
 
