@@ -37,10 +37,12 @@ batch_size: int = yaml_config['dataset']['batch_size']
 small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
 
+print('init dataset')
 # %%
 dataset = UtilizationDataset(small_df=small_df, include_tasks=include_tasks)
 test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks)
 
+print('init hyperparameters')
 # %%
 num_epochs: int = yaml_config['model']['num_epochs']
 learning_rate: float = yaml_config['model']['learning_rate']
@@ -84,14 +86,13 @@ if INCLUDE_WANDB:
 
 # %%
 # lstm = LSTM(num_classes, input_size, hidden_size, num_layers, seq_length, bidirectional=bidirectional)
+print('init lstm')
 lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 lstm.train()
 
 # log gradients and model parameters
 if INCLUDE_WANDB:
     wandb.watch(lstm)
-
-lstm
 
 # %%
 # mean square error for regression
@@ -155,6 +156,7 @@ loss_progression: list = []
 if torch.has_cuda:
     torch.cuda.empty_cache()
 
+print('start training')
 # %%
 for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}')):
 
