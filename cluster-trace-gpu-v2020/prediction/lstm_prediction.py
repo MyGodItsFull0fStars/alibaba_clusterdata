@@ -1,12 +1,10 @@
 # %%
 from lstm_models import LSTM, UtilizationLSTM
 from gpu_dataloader import ForecastDataset, UtilizationDataset
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.metrics import mean_absolute_error
 
 # plotting the data
 import matplotlib.pyplot as plt
@@ -14,14 +12,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 
-import random
-
 from utils import get_device
-from loss_classes import RMSELoss
 
 import numpy as np
 
-from utils import get_device_as_string, get_device, get_rmse, get_mape, get_mae
+from utils import get_device_as_string, get_device, get_rmse, get_mae
 
 # %%
 import yaml
@@ -58,9 +53,7 @@ num_layers: int = yaml_config['model']['num_layers']
 num_classes: int = dataset.y.shape[1]
 seq_length: int = dataset.X.shape[1]
 
-device = get_device()
-
-INCLUDE_WANDB: bool = False
+INCLUDE_WANDB: bool = yaml_config['logging']['enable_wandb']
 
 # %%
 if INCLUDE_WANDB == True:
@@ -89,6 +82,8 @@ if INCLUDE_WANDB:
 print('init lstm')
 lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 lstm.train()
+
+device = lstm.device
 
 # log gradients and model parameters
 if INCLUDE_WANDB:
