@@ -82,14 +82,13 @@ class LSTM(nn.Module):
 
 class UtilizationLSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int = 1, future: int = 0) -> None:
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int = 1, generalization: str = 'batch') -> None:
         super(UtilizationLSTM, self).__init__()
         self.num_classes: int = num_classes
         self.input_size: int = input_size
         self.hidden_size: int = hidden_size
         self.num_layers = num_layers
-        self.future: int = future
-        
+
         self.device = device
 
         # long-short term memory layer to predict cpu usage
@@ -108,8 +107,15 @@ class UtilizationLSTM(nn.Module):
             batch_first=True,
         ).to(device)
 
-        self.cpu_lstm_seq = self.init_sequential_layer(hidden_size)
-        self.mem_lstm_seq = self.init_sequential_layer(hidden_size)
+        
+        if generalization == 'dropout':
+            self.cpu_lstm_seq = self.init_sequential_layer_dropout(hidden_size)
+            self.mem_lstm_seq = self.init_sequential_layer_dropout(hidden_size)
+            
+        # if generalization == 'batch':
+        else:
+            self.cpu_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
+            self.mem_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         cpu_input, mem_input = self.split_input(input)
@@ -133,8 +139,7 @@ class UtilizationLSTM(nn.Module):
         # Only use the last stacked lstm layer as output
         output = output[(self.num_layers - 1) * input.size(0):]
 
-
-        return torch.abs(output)
+        return output
 
     def get_hidden_internal_state(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
@@ -170,7 +175,7 @@ class UtilizationLSTM(nn.Module):
         cpu_input, mem_input = input[:, :, cpu_columns], input[:, :, mem_columns]
         return (cpu_input, mem_input)
 
-    def init_sequential_layer(self, hidden_size: int) -> nn.Sequential:
+    def init_sequential_layer_batchnorm(self, hidden_size: int) -> nn.Sequential:
         return nn.Sequential(
             # nn.LeakyReLU(),
             # nn.BatchNorm1d(hidden_size),
@@ -183,10 +188,25 @@ class UtilizationLSTM(nn.Module):
             nn.BatchNorm1d(hidden_size // 4),
 
             nn.Linear(hidden_size // 4, 1), 
-            
-            
+                    
         ).to(device)
 
+
+    def init_sequential_layer_dropout(self, hidden_size: int) -> nn.Sequential:
+        return nn.Sequential(
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+
+            nn.Linear(hidden_size // 2, hidden_size // 4),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+
+            nn.Linear(hidden_size // 4, 1), 
+                    
+        ).to(device)
 
 if __name__ == '__main__':
 
@@ -209,7 +229,7 @@ if __name__ == '__main__':
 
     # lstm.forward(test_tensor)
 
-    lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=3, future=2)
+    lstm = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers=1, generalization='dropout')
     lstm.forward(test_tensor)
     
     output = lstm.split_input(test_tensor)
