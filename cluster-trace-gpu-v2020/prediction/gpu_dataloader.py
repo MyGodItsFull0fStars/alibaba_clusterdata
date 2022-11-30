@@ -154,6 +154,62 @@ class GPUDataset(Dataset):
 
         return X_df, y_df
 
+class MachineSplitDataset():
+    
+    def __init__(
+        self,
+        is_training: bool = True,
+        small_df: bool = False,
+        include_tasks: bool = False
+        ) -> None:
+        
+        self.is_training: bool = is_training
+        self.small_df: bool = small_df
+        self.include_tasks: bool = include_tasks
+        
+        self.start_index_array = np.empty((0, 0))
+        self.end_index_array = np.empty((0, 0))
+        self.init_index_arrays()
+        
+        self.dataset_list: List[Dataset] = self.init_datasets()
+        
+        
+    def init_datasets(self) -> List[Dataset]:
+        machine_df = self.read_data_csv()
+        
+        def get_machine_list() -> list:
+            machine_list = list()
+            if self.small_df is False:
+                for idx in range(len(self.start_index_array)):
+                    machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
+                    machine_list.append(machine)
+                    
+            else:
+                for idx in range(5):
+                    machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
+                    machine_list.append(machine)
+            return machine_list
+        
+        machine_list = get_machine_list()
+        
+        return list()
+    
+    def init_index_arrays(self):
+        index_df = self.read_index_csv()
+        
+        if self.is_training:
+            self.start_index_array = index_df['train_start'].values
+            self.end_index_array = index_df['train_end'].values
+        else: # test set
+            self.start_index_array = index_df['test_start'].values
+            self.end_index_array = index_df['test_end'].values
+            
+        
+    def read_data_csv(self, csv_path: str = 'df_machine_sorted.csv') -> pd.DataFrame:
+        return pd.read_csv(csv_path)
+    
+    def read_index_csv(self, csv_path: str = 'machine_indices.csv') -> pd.DataFrame:
+        return pd.read_csv(csv_path, index_col=0)
 
 class UtilizationDataset(GPUDataset):
 
@@ -287,9 +343,13 @@ if __name__ == '__main__':
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
 
-    test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
-    print(test_dataset.__class__.__name__,
-          test_dataset.X.shape, test_dataset.y.shape)
+    # test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
+    # print(test_dataset.__class__.__name__,
+    #       test_dataset.X.shape, test_dataset.y.shape)
+    
+    test = MachineSplitDataset()
+    test.read_data_csv()
+    test.read_index_csv()
     
 
     # test_dataset = ForecastDataset(small_df=True)
