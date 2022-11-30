@@ -179,15 +179,12 @@ class MachineSplitDataset():
         
         def get_machine_list() -> list:
             machine_list = list()
-            if self.small_df is False:
-                for idx in range(len(self.start_index_array)):
-                    machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
-                    machine_list.append(machine)
+            idx_range = 5 if self.small_df else len(self.start_index_array)
+
+            for idx in range(idx_range):
+                machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
+                machine_list.append(machine)
                     
-            else:
-                for idx in range(5):
-                    machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
-                    machine_list.append(machine)
             return machine_list
         
         machine_list = get_machine_list()
