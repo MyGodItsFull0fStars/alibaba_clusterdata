@@ -182,7 +182,9 @@ class MachineSplitDataset():
             idx_range = 5 if self.small_df else len(self.start_index_array)
 
             for idx in range(idx_range):
-                machine = machine_df.iloc[:, self.start_index_array[idx]:self.end_index_array[idx]]
+                start = self.start_index_array[idx]
+                end = self.end_index_array[idx] + 1 # type: ignore
+                machine = machine_df.iloc[:, start:end]
                 machine_list.append(machine)
                     
             return machine_list
