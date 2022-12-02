@@ -213,6 +213,21 @@ class MachineDataset(Dataset):
         
         del X_df, y_df
         
+        
+    def get_feature_shape(self) -> torch.Size:
+        return self.X.shape
+        
+    def get_model_input_size(self) -> int:
+        input_size = self.X.shape[2]
+        assert input_size is not None and input_size > 0
+        return input_size
+        
+        
+    def get_model_num_classes(self) -> int:
+        num_classes = self.y.shape[1]
+        assert num_classes is not None and num_classes > 0
+        return num_classes
+    
     def __len__(self):
         return self.X.size(0)
     
@@ -259,7 +274,7 @@ class MachineDatasetContainer():
         def get_machine_dataset(machine_list: List[pd.DataFrame]) -> List[MachineDataset]:
             dataset_list: List[MachineDataset] = list()
             for m in machine_list:
-                m_ds = MachineDataset(m, self.get_feature_columns(), self._get_label_columns())
+                m_ds = MachineDataset(m, self.get_feature_columns(), self.get_label_columns())
                 dataset_list.append(m_ds)
                 
             return dataset_list
@@ -289,7 +304,7 @@ class MachineDatasetContainer():
             return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns() + DatasetColumns._get_job_columns()
         return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
 
-    def _get_label_columns(self) -> List[str]:
+    def get_label_columns(self) -> List[str]:
         return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
 
         
@@ -300,8 +315,12 @@ class MachineDatasetContainer():
     def read_index_csv(self, csv_path: str = 'machine_indices.csv') -> pd.DataFrame:
         return pd.read_csv(csv_path, index_col=0)
     
-  
+    def get_model_input_size(self) -> int:
+        return self.dataset_list[0].get_model_input_size()
 
+    def get_model_num_classes(self) -> int:
+        return self.dataset_list[0].get_model_num_classes()
+    
 class UtilizationDataset(GPUDataset):
 
     def __init__(
