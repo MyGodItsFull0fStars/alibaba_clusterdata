@@ -23,6 +23,86 @@ STD_DEV_KEY: str = 'std'
 # source: https://stackoverflow.com/a/42190404
 pd.options.mode.chained_assignment = None  # type: ignore
 
+def transform_dfs_to_tensors(X_df, y_df) -> Tuple[torch.Tensor, torch.Tensor]:
+        X_df, y_df = X_df.to_numpy(), y_df.to_numpy()
+
+        # Convert to Tensors
+        X_df = torch.Tensor(X_df)
+        y_df = torch.Tensor(y_df)
+
+        # Reshape Feature Tensor
+        X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
+
+        return X_df, y_df
+
+class DatasetColumns(object):
+    
+    @staticmethod
+    def _get_job_columns() -> List[str]:
+        return [
+            'BladeMain',
+            'JupyterTask', 'OpenmpiWorker', 'OssToVolumeWorker', 'PyTorchWorker',
+            'TVMTuneMain', 'chief', 'evaluator', 'ps', 'tensorflow', 'worker',
+            'xComputeWorker'
+        ]
+
+    @staticmethod
+    def _get_cpu_utilization_columns() -> List[str]:
+        return ['cpu_usage']
+
+    @staticmethod
+    def _get_mem_utilization_columns() -> List[str]:
+        return DatasetColumns.get_avg_mem_utilization_column() + DatasetColumns.get_max_mem_utilization_column()
+    
+    @staticmethod
+    def get_avg_mem_utilization_column() -> List[str]:
+        return ['avg_mem']
+    
+    @staticmethod
+    def get_max_mem_utilization_column() -> List[str]:
+        return ['max_mem']
+
+    @staticmethod
+    def _get_gpu_utilization_columns() -> List[str]:
+        return ['gpu_wrk_util',
+                'avg_gpu_wrk_mem', 'max_gpu_wrk_mem']
+
+    @staticmethod
+    def _get_runtime_column() -> List[str]:
+        return ['runtime']
+
+    @staticmethod
+    def _get_plan_cpu_columns() -> List[str]:
+        return ['plan_cpu']
+
+    @staticmethod
+    def _get_plan_mem_columns() -> List[str]:
+        return ['plan_mem']
+
+    @staticmethod
+    def _get_plan_gpu_columns() -> List[str]:
+        return ['plan_gpu']
+
+    @staticmethod
+    def _get_plan_utilization_columns() -> List[str]:
+        return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_gpu_columns() + DatasetColumns._get_plan_mem_columns()
+
+    @staticmethod
+    def get_cap_cpu_columns() -> List[str]:
+        return ['cap_cpu']
+
+    @staticmethod
+    def get_cap_gpu_columns() -> List[str]:
+        return ['cap_gpu']
+
+    @staticmethod
+    def get_cap_mem_columns() -> List[str]:
+        return ['cap_mem']
+
+    @staticmethod
+    def _get_cap_utilization_columns() -> List[str]:
+        return DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_gpu_columns() + DatasetColumns.get_cap_mem_columns()
+
 
 class GPUDataset(Dataset):
 
@@ -75,57 +155,6 @@ class GPUDataset(Dataset):
     def _get_label_columns(self) -> List[str]:
         return []
 
-    def _get_job_columns(self) -> List[str]:
-        return [
-            'BladeMain',
-            'JupyterTask', 'OpenmpiWorker', 'OssToVolumeWorker', 'PyTorchWorker',
-            'TVMTuneMain', 'chief', 'evaluator', 'ps', 'tensorflow', 'worker',
-            'xComputeWorker'
-        ]
-
-    def _get_cpu_utilization_columns(self) -> List[str]:
-        return ['cpu_usage']
-
-    def _get_mem_utilization_columns(self) -> List[str]:
-        return self.get_avg_mem_utilization_column() + self.get_max_mem_utilization_column()
-    
-    def get_avg_mem_utilization_column(self) -> List[str]:
-        return ['avg_mem']
-    
-    def get_max_mem_utilization_column(self) -> List[str]:
-        return ['max_mem']
-
-    def _get_gpu_utilization_columns(self) -> List[str]:
-        return ['gpu_wrk_util',
-                'avg_gpu_wrk_mem', 'max_gpu_wrk_mem']
-
-    def _get_runtime_column(self) -> List[str]:
-        return ['runtime']
-
-    def _get_plan_cpu_columns(self) -> List[str]:
-        return ['plan_cpu']
-
-    def _get_plan_mem_columns(self) -> List[str]:
-        return ['plan_mem']
-
-    def _get_plan_gpu_columns(self) -> List[str]:
-        return ['plan_gpu']
-
-    def _get_plan_utilization_columns(self) -> List[str]:
-        return self._get_plan_cpu_columns() + self._get_plan_gpu_columns() + self._get_plan_mem_columns()
-
-    def get_cap_cpu_columns(self) -> List[str]:
-        return ['cap_cpu']
-
-    def get_cap_gpu_columns(self) -> List[str]:
-        return ['cap_gpu']
-
-    def get_cap_mem_columns(self) -> List[str]:
-        return ['cap_mem']
-
-    def _get_cap_utilization_columns(self) -> List[str]:
-        return self.get_cap_cpu_columns() + self.get_cap_gpu_columns() + self.get_cap_mem_columns()
-
     def __prepare_data_path(self, data_path: str) -> str:
         if data_path is None or len(data_path) == 0:
             data_path = 'machine_sorted_df.csv'
@@ -153,8 +182,45 @@ class GPUDataset(Dataset):
         X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
 
         return X_df, y_df
+    
+class MachineDataset(Dataset):
+    
+    def __init__(self, machine: pd.DataFrame, feature_columns: List[str], label_columns: List[str]) -> None:
+        super(MachineDataset, self).__init__()
+        
+        self.X: Tensor = torch.empty(0)
+        self.y: Tensor = torch.empty(0)
+        self.X_scaler: DataFrameScaler = DataFrameScaler()
+        self.y_scaler: DataFrameScaler = DataFrameScaler()
+        
+        self.feature_columns: List[str] = feature_columns
+        self.label_columns: List[str] = label_columns
+        
+        self.prepare_tensors(machine)
+        
+        
+    def prepare_tensors(self, machine: pd.DataFrame) -> None:
+        X_df = machine[self.feature_columns]
+        y_df = machine[self.label_columns]
+        
+        self.X_scaler = DataFrameScaler(X_df, filter_columns=DatasetColumns._get_job_columns())
+        self.y_scaler = DataFrameScaler(y_df, filter_columns=DatasetColumns._get_job_columns())
+        
+        X_df = self.X_scaler.standardize_df(X_df)
+        y_df = self.y_scaler.normalize_df(y_df)
+        
+        self.X, self.y = transform_dfs_to_tensors(X_df, y_df)
+        
+        del X_df, y_df
+        
+    def __len__(self):
+        return self.X.size(0)
+    
+    def __getitem__(self, index):
+        if 0 <= index < self.X.size(0):
+            return self.X[index], self.y[index]
 
-class MachineSplitDataset():
+class MachineDatasetContainer():
     
     def __init__(
         self,
@@ -169,13 +235,13 @@ class MachineSplitDataset():
         
         self.start_index_array = np.empty((0, 0))
         self.end_index_array = np.empty((0, 0))
+        
         self.init_index_arrays()
+        self.init_machine_dataset()
         
-        self.dataset_list: List[Dataset] = self.init_datasets()
         
-        
-    def init_datasets(self) -> List[Dataset]:
-        machine_df = self.read_data_csv()
+    def init_machine_dataset(self):
+        machine_df = self.read_machine_csv()
         
         def get_machine_list() -> list:
             machine_list = list()
@@ -183,16 +249,29 @@ class MachineSplitDataset():
 
             for idx in range(idx_range):
                 start = self.start_index_array[idx]
-                end = self.end_index_array[idx] + 1 # type: ignore
-                machine = machine_df.iloc[:, start:end]
+                end = self.end_index_array[idx]
+                
+                machine = machine_df.iloc[start:end]
                 machine_list.append(machine)
                     
             return machine_list
         
-        machine_list = get_machine_list()
+        def get_machine_dataset(machine_list: List[pd.DataFrame]) -> List[MachineDataset]:
+            dataset_list: List[MachineDataset] = list()
+            for m in machine_list:
+                m_ds = MachineDataset(m, self.get_feature_columns(), self._get_label_columns())
+                dataset_list.append(m_ds)
+                
+            return dataset_list
         
-        return list()
-    
+        machine_list = get_machine_list()
+        assert machine_list is not None and len(machine_list) > 0        
+        
+        self.dataset_list = get_machine_dataset(machine_list)
+        
+        del machine_df, machine_list
+        
+        
     def init_index_arrays(self):
         index_df = self.read_index_csv()
         
@@ -203,12 +282,25 @@ class MachineSplitDataset():
             self.start_index_array = index_df['test_start'].values
             self.end_index_array = index_df['test_end'].values
             
+        del index_df
         
-    def read_data_csv(self, csv_path: str = 'df_machine_sorted.csv') -> pd.DataFrame:
-        return pd.read_csv(csv_path)
+    def get_feature_columns(self) -> List[str]:
+        if self.include_tasks == True:
+            return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns() + DatasetColumns._get_job_columns()
+        return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
+
+    def _get_label_columns(self) -> List[str]:
+        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
+
+        
+    def read_machine_csv(self, csv_path: str = 'df_machine_sorted.csv') -> pd.DataFrame:
+        machine_df = pd.read_csv(csv_path, index_col=0)
+        return machine_df
     
     def read_index_csv(self, csv_path: str = 'machine_indices.csv') -> pd.DataFrame:
         return pd.read_csv(csv_path, index_col=0)
+    
+  
 
 class UtilizationDataset(GPUDataset):
 
@@ -235,12 +327,13 @@ class UtilizationDataset(GPUDataset):
     def _init_data_tensors(self, df: pd.DataFrame) -> Tuple[Tensor, Tensor]:
 
         X_df = df[self._get_feature_columns()]
-        X_df[self.get_cap_cpu_columns()] = X_df[self.get_cap_cpu_columns()]  
+        # TODO does this make any sense?
+        X_df[DatasetColumns.get_cap_cpu_columns()] = X_df[DatasetColumns.get_cap_cpu_columns()]  
         
         y_df = df[self._get_label_columns()]
 
-        self.X_scaler = DataFrameScaler(X_df, self._get_job_columns())
-        self.y_scaler = DataFrameScaler(y_df, self._get_job_columns())
+        self.X_scaler = DataFrameScaler(X_df, DatasetColumns._get_job_columns())
+        self.y_scaler = DataFrameScaler(y_df, DatasetColumns._get_job_columns())
 
         X_df = self.X_scaler.standardize_df(X_df)
         y_df = self.y_scaler.normalize_df(y_df)
@@ -256,11 +349,11 @@ class UtilizationDataset(GPUDataset):
 
     def _get_feature_columns(self) -> List[str]:
         if self.include_tasks == True:
-            return self._get_plan_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_cpu_columns() + self.get_cap_mem_columns() + self._get_job_columns()
-        return self._get_plan_cpu_columns() + self.get_cap_cpu_columns() + self._get_plan_mem_columns() + self.get_cap_mem_columns()
+            return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns() + DatasetColumns._get_job_columns()
+        return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
 
     def _get_label_columns(self) -> List[str]:
-        return self._get_cpu_utilization_columns() + self.get_avg_mem_utilization_column()
+        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
         # return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
 
@@ -288,12 +381,12 @@ class ForecastDataset(GPUDataset):
         return self.__append_to_feature_and_label_set(df)
 
     def _get_feature_columns(self) -> List[str]:
-        return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_gpu_utilization_columns() + self._get_runtime_column() + self._get_job_columns()
+        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns._get_mem_utilization_columns() + DatasetColumns._get_gpu_utilization_columns() + DatasetColumns._get_runtime_column() + DatasetColumns._get_job_columns()
 
     def _get_label_columns(self) -> List[str]:
         # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
         #                      'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
-        return self._get_runtime_column()
+        return DatasetColumns._get_runtime_column()
 
     def _get_feature_label_tensors(self) -> Tuple[Tensor, Tensor]:
         return self.X, self.y
@@ -346,9 +439,17 @@ if __name__ == '__main__':
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
     
-    test = MachineSplitDataset()
-    test.read_data_csv()
-    test.read_index_csv()
+    cont = MachineDatasetContainer(small_df=True)
+    print(len(cont.dataset_list))
+    
+    # test.read_data_csv()
+    # test.read_index_csv()
+    # single_machine_df = pd.read_csv('./single_machine.csv', index_col=0)    
+    # feat = DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns()
+    # lab = DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
+    # test = MachineDataset(single_machine_df, feat, lab)
+    # print(test.X)
+    
     
 
     # test_dataset = ForecastDataset(small_df=True)
