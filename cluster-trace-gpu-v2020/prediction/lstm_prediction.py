@@ -231,7 +231,7 @@ else:
     prediction = prediction.data.numpy()
 
 actual_data = dataset.y.data.numpy()
-label_columns = dataset._get_label_columns()
+label_columns = dataset.get_label_columns()
 
 # create dataframes
 prediction_df = pd.DataFrame(prediction, columns=label_columns)
@@ -359,7 +359,7 @@ else:
 
 actual_data = test_set.y.data.numpy()
 
-label_columns = test_set._get_label_columns()
+label_columns = test_set.get_label_columns()
 
 # create dataframes
 prediction_df = pd.DataFrame(prediction, columns=label_columns)

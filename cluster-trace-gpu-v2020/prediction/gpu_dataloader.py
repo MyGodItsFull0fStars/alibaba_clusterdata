@@ -251,6 +251,8 @@ class MachineDatasetContainer():
         self.start_index_array = np.empty((0, 0))
         self.end_index_array = np.empty((0, 0))
         
+        self.dataset_list: List[MachineDataset] = list()
+        
         self.init_index_arrays()
         self.init_machine_dataset()
         
