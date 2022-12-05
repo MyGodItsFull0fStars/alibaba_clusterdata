@@ -149,10 +149,10 @@ class GPUDataset(Dataset):
     def _get_feature_label_tensors(self) -> Tuple[Tensor, Tensor]:
         return torch.empty(0), torch.empty(0)
 
-    def _get_feature_columns(self) -> List[str]:
+    def get_feature_columns(self) -> List[str]:
         return []
 
-    def _get_label_columns(self) -> List[str]:
+    def get_label_columns(self) -> List[str]:
         return []
 
     def __prepare_data_path(self, data_path: str) -> str:
@@ -346,11 +346,11 @@ class UtilizationDataset(GPUDataset):
 
     def _init_data_tensors(self, df: pd.DataFrame) -> Tuple[Tensor, Tensor]:
 
-        X_df = df[self._get_feature_columns()]
+        X_df = df[self.get_feature_columns()]
         # TODO does this make any sense?
         X_df[DatasetColumns.get_cap_cpu_columns()] = X_df[DatasetColumns.get_cap_cpu_columns()]  
         
-        y_df = df[self._get_label_columns()]
+        y_df = df[self.get_label_columns()]
 
         self.X_scaler = DataFrameScaler(X_df, DatasetColumns._get_job_columns())
         self.y_scaler = DataFrameScaler(y_df, DatasetColumns._get_job_columns())
@@ -367,12 +367,12 @@ class UtilizationDataset(GPUDataset):
 
         return X_tens, y_tens
 
-    def _get_feature_columns(self) -> List[str]:
+    def get_feature_columns(self) -> List[str]:
         if self.include_tasks == True:
             return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns() + DatasetColumns._get_job_columns()
         return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
 
-    def _get_label_columns(self) -> List[str]:
+    def get_label_columns(self) -> List[str]:
         return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
         # return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
@@ -400,10 +400,10 @@ class ForecastDataset(GPUDataset):
 
         return self.__append_to_feature_and_label_set(df)
 
-    def _get_feature_columns(self) -> List[str]:
+    def get_feature_columns(self) -> List[str]:
         return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns._get_mem_utilization_columns() + DatasetColumns._get_gpu_utilization_columns() + DatasetColumns._get_runtime_column() + DatasetColumns._get_job_columns()
 
-    def _get_label_columns(self) -> List[str]:
+    def get_label_columns(self) -> List[str]:
         # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
         #                      'avg_gpu_wrk_mem', 'max_gpu_wrk_mem', 'runtime']
         return DatasetColumns._get_runtime_column()
@@ -443,8 +443,8 @@ class ForecastDataset(GPUDataset):
         return self._transform_dfs_to_tensors(X_df, y_df)
 
     def __filter_columns(self, X_df, y_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        X_df = X_df[self._get_feature_columns()]
-        y_df = y_df[self._get_label_columns()]
+        X_df = X_df[self.get_feature_columns()]
+        y_df = y_df[self.get_label_columns()]
 
         return X_df, y_df
 
