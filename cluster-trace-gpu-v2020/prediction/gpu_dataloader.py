@@ -260,7 +260,7 @@ class MachineDatasetContainer():
         
         def get_machine_list() -> list:
             machine_list = list()
-            idx_range = 5 if self.small_df else len(self.start_index_array)
+            idx_range = 1 if self.small_df else len(self.start_index_array)
 
             for idx in range(idx_range):
                 start = self.start_index_array[idx]
@@ -290,12 +290,9 @@ class MachineDatasetContainer():
     def init_index_arrays(self):
         index_df = self.read_index_csv()
         
-        if self.is_training:
-            self.start_index_array = index_df['train_start'].values
-            self.end_index_array = index_df['train_end'].values
-        else: # test set
-            self.start_index_array = index_df['test_start'].values
-            self.end_index_array = index_df['test_end'].values
+        index_prefix = 'train' if self.is_training else 'test'
+        self.start_index_array = index_df[f'{index_prefix}_start'].values
+        self.end_index_array = index_df[f'{index_prefix}_end'].values
             
         del index_df
         
@@ -310,10 +307,14 @@ class MachineDatasetContainer():
         
     def read_machine_csv(self, csv_path: str = 'df_machine_sorted.csv') -> pd.DataFrame:
         machine_df = pd.read_csv(csv_path, index_col=0)
+        assert machine_df is not None and len(machine_df) > 0
+        
         return machine_df
     
     def read_index_csv(self, csv_path: str = 'machine_indices.csv') -> pd.DataFrame:
-        return pd.read_csv(csv_path, index_col=0)
+        index_df = pd.read_csv(csv_path, index_col=0)
+        assert index_df is not None and len(index_df) > 0
+        return index_df
     
     def get_model_input_size(self) -> int:
         return self.dataset_list[0].get_model_input_size()
