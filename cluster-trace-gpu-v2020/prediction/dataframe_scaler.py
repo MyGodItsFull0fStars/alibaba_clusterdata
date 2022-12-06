@@ -68,6 +68,8 @@ class DataFrameScaler():
         df_c = df.copy()
         df_c.loc[:, std_columns] = df_c.loc[:, std_columns].apply(
             lambda x: ((x - self.std_dev_df.at[MEAN_KEY, x.name]) / self.std_dev_df.at[STD_DEV_KEY, x.name]))
+        # in case the standard deviation is 0 (this happens if all values in a column are identical)
+        df_c.fillna(0, inplace=True)
 
         return df_c
 
@@ -76,6 +78,8 @@ class DataFrameScaler():
         df.loc[:, std_columns] = df.loc[:, std_columns].apply(
             lambda x: ((x - self.std_dev_df.at[MEAN_KEY, x.name]) / self.std_dev_df.at[STD_DEV_KEY, x.name]))
 
+        df.fillna(0, inplace=True)
+        
         return df
 
     def inverse_standardize_df(self, df: DataFrame) -> DataFrame:
