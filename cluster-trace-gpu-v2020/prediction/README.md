@@ -38,12 +38,17 @@ This section briefly describes the different datasets used in this repository.
 
 ### Timestamp Sorted Datasets
 
+The dataset `preprocessed_worker_new.csv` is sorted by timestamp (index `start_time`), meaning tasks are sorted by arrival time on the GPU servers, regardless of which machine they will be sent to. If two tasks arrive at the same time, the tasks will be sorted by the `machine` column in the dataset.
+
+This dataset is used in the Jupyter notebook `lstm_timestamp_prediction.ipynb` and the approach is further described in section **Timestamp Prediction**. 
+
 ### Machine Sorted Datasets
 
 `df_machine_sorted.csv`, `machine_indices.csv`
 
 ## How to use
 
-### Timestamp Prediction
+### Timestamp Prediction {timestamp prediction}
+
 
 ### Machine Prediction
