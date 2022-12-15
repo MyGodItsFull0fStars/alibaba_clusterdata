@@ -45,6 +45,13 @@ hidden_size: int = yaml_config['model']['hidden_size']
 num_layers: int = yaml_config['model']['num_layers']
 num_classes: int = dataset.get_model_num_classes()
 
+print(f'''
+      input size: {input_size}
+      hidden size: {hidden_size}
+      num layers: {num_layers}
+      num epochs: {num_epochs}
+      ''')
+
 device = get_device()
 
 INCLUDE_WANDB: bool = False
