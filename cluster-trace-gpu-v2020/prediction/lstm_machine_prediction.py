@@ -23,7 +23,7 @@ from utils import get_device, get_rmse, get_mae
 
 # %%
 print('load yaml config file')
-with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as file:
+with open('./model_configs/machine_test/machine_test.yaml') as file:
     yaml_config = yaml.load(file, Loader=SafeLoader)
 
 # %%
