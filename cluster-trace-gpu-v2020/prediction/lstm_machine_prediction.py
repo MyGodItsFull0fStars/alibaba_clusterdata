@@ -169,7 +169,7 @@ loss_val = None
 loss_progression: list = list()
 
 print('start training loop')
-for epoch in (pbar := tqdm(range(0, 3), desc=f'Training Loop (0) -- Loss: {loss_val}')):
+for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}')):
     
     for train_loader in train_data_loaders:
         
