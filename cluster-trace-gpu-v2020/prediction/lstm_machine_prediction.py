@@ -281,6 +281,7 @@ def get_combined_data_df(dataset_container: MachineDatasetContainer, save_to_fil
 
 # %%
 train_combined_df = get_combined_data_df(dataset)
+train_combined_df['loss progress'] = loss_progression
 
 # %%
 test_combined_df = get_combined_data_df(test_dataset, is_training=False)
