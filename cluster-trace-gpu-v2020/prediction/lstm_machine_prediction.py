@@ -1,4 +1,5 @@
 # %%
+print('import libraries')
 import time
 
 from typing import List
@@ -21,6 +22,7 @@ from utils import get_device, get_rmse, get_mae
 
 
 # %%
+print('load yaml config file')
 with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as file:
     yaml_config = yaml.load(file, Loader=SafeLoader)
 
@@ -28,9 +30,9 @@ with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as file
 batch_size: int = yaml_config['dataset']['batch_size']
 small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
-batch_size, small_df, include_tasks
 
 # %%
+print('load datasets')
 dataset = MachineDatasetContainer(is_training=True, small_df=small_df, include_tasks=include_tasks)
 test_dataset = MachineDatasetContainer(is_training=False, small_df=small_df, include_tasks=include_tasks)
 
@@ -49,6 +51,7 @@ INCLUDE_WANDB: bool = False
 
 # %%
 if INCLUDE_WANDB == True:
+    print('init wandb')
     import wandb
     wandb.init(project=yaml_config['model']['name'])
 
@@ -70,13 +73,12 @@ if INCLUDE_WANDB:
     wandb.define_metric(MAE_TRAINING, summary='min')
 
 # %%
+print('init lstm model')
 model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 model.train()
 
 if INCLUDE_WANDB:
     wandb.watch(model)
-    
-model
 
 # %%
 criterion = nn.MSELoss().to(device)
@@ -119,11 +121,13 @@ def convert_datasets_to_data_loaders(data: MachineDatasetContainer, shuffle: boo
         
     return data_loaders
 
+print('init dataloaders')
 train_data_loaders: List[DataLoader] = convert_datasets_to_data_loaders(dataset)
 test_data_loaders: List[DataLoader] = convert_datasets_to_data_loaders(test_dataset)
 
 # %%
 if torch.has_cuda:
+    print('empty cuda cache')
     torch.cuda.empty_cache()
 
 # %%
@@ -164,7 +168,8 @@ def validation_loop():
 loss_val = None
 loss_progression: list = list()
 
-for epoch in (pbar := tqdm(range(0, 15), desc=f'Training Loop (0) -- Loss: {loss_val}')):
+print('start training loop')
+for epoch in (pbar := tqdm(range(0, 3), desc=f'Training Loop (0) -- Loss: {loss_val}')):
     
     for train_loader in train_data_loaders:
         
@@ -178,7 +183,6 @@ for epoch in (pbar := tqdm(range(0, 15), desc=f'Training Loop (0) -- Loss: {loss
 
 # %%
 current_time = time.ctime()
-current_time
 
 # %%
 model.eval()
@@ -202,7 +206,8 @@ if yaml_config['model']['save_model'] and False:
 
 
 # %%
-def get_combined_data_df(dataset_container: MachineDatasetContainer, save_to_file: bool = True) -> pd.DataFrame:
+def get_combined_data_df(dataset_container: MachineDatasetContainer, save_to_file: bool = True, is_training: bool = True) -> pd.DataFrame:
+    print('create combined df')
     model.eval()
     prediction_list: List[pd.DataFrame] = list()
     actual_data_list: List[pd.DataFrame] = list()
@@ -266,7 +271,8 @@ def get_combined_data_df(dataset_container: MachineDatasetContainer, save_to_fil
     combined_df = combine_dataframes(prediction_df, actual_data_df, plan_df)
 
     if save_to_file and yaml_config['evaluation_path']['save_to_file']:
-        combined_df.to_csv(yaml_config['evaluation_path']['training_prediction_path'])   
+        prediction_path = 'training_prediction_path' if is_training else 'test_prediction_path'
+        combined_df.to_csv(yaml_config['evaluation_path'][prediction_path])   
         
     del prediction_list, actual_data_list, plan_data_list
     
@@ -277,6 +283,7 @@ def get_combined_data_df(dataset_container: MachineDatasetContainer, save_to_fil
 train_combined_df = get_combined_data_df(dataset)
 
 # %%
-train_combined_df.head(5)
+test_combined_df = get_combined_data_df(test_dataset, is_training=False)
+
 
 
