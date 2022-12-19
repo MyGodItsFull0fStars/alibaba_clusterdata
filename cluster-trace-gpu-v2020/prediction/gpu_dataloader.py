@@ -1,9 +1,8 @@
 from typing import List, Tuple
 import torch
-from torch import Tensor, is_distributed, std
+from torch import Tensor
 from torch.utils.data import Dataset
 
-from time import perf_counter
 import pandas as pd
 import numpy as np
 
