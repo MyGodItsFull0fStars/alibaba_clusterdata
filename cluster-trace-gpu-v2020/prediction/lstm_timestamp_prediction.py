@@ -1,4 +1,5 @@
 # %%
+print('import libraries')
 from lstm_models import LSTM, UtilizationLSTM
 from gpu_dataloader import ForecastDataset, UtilizationDataset
 from torch.utils.data import DataLoader, Dataset
@@ -34,10 +35,12 @@ small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
 
 # %%
+print('load datasets')
 dataset = UtilizationDataset(is_training=True, small_df=small_df, include_tasks=include_tasks)
 test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks)
 
 # %%
+print('init model parameters')
 num_epochs: int = yaml_config['model']['num_epochs']
 learning_rate: float = yaml_config['model']['learning_rate']
 
@@ -77,6 +80,7 @@ if INCLUDE_WANDB:
     wandb.define_metric(MAE_TRAINING, summary='min')
 
 # %%
+print('init model')
 # lstm = LSTM(num_classes, input_size, hidden_size, num_layers, seq_length, bidirectional=bidirectional)
 model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 model.train()
@@ -85,11 +89,9 @@ model.train()
 if INCLUDE_WANDB:
     wandb.watch(model)
 
-model
-
 # %%
 # mean square error for regression
-# nn.
+print('init loss, optimizer and scheduler')
 criterion = nn.MSELoss()
 # criterion = RMSELoss()
 criterion = criterion.to(device)
@@ -141,6 +143,7 @@ def reorder_dataset(dataset: ForecastDataset, batch_size: int):
 
 # %%
 modulo_switch = num_epochs // 10
+print('init train dataloader')
 train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=10)
 
 loss_val = None
@@ -180,6 +183,7 @@ def validation_loop():
         scheduler.step(val_loss)
 
 # %%
+print('start training loop')
 for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}')):
 
     # if epoch % modulo_switch == modulo_switch - 1:
@@ -207,7 +211,7 @@ current_time
 
 # %%
 model.eval()
-
+print('save model')
 if yaml_config['model']['save_model']:
     model_name = f'models/epochs-{num_epochs}-{current_time}'
     torch.save(
@@ -284,6 +288,7 @@ def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True
     return combined_df
 
 # %%
+print('save combined dfs')
 combined_train_df = get_combined_data_df(dataset)
 
 # %%
