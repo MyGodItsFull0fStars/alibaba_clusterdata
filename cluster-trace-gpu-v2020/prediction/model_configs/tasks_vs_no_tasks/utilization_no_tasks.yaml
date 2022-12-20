@@ -2,7 +2,7 @@
 dataset:
   small_df: True
   include_tasks: False
-  batch_size: 2000
+  batch_size: 500
 
 model:
   name: "Utilization LSTM Model without Tasks"
