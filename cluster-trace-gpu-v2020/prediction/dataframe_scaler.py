@@ -2,8 +2,6 @@ from tkinter.messagebox import NO
 from typing import List, Tuple
 
 import numpy as np
-import pandas as pd
-import torch
 from pandas import DataFrame
 from torch import Tensor
 
@@ -13,7 +11,7 @@ STD_DEV_KEY: str = 'std'
 MIN_KEY: str = 'min'
 MAX_KEY: str = 'max'
 
-
+# TODO change so a numpy array is returned unless a DataFrame is "asked" by the user
 class DataFrameScaler():
 
     def __init__(self, df: DataFrame = None, filter_columns=None) -> None:  # type: ignore
@@ -33,9 +31,10 @@ class DataFrameScaler():
         self.std_dev_df = self._get_std_mean_df(df)
         self.norm_dev_df = self._get_norm_min_max_df(df)
 
+    
     def fit_transform_std(self, df: DataFrame) -> DataFrame:
         self.fit(df)
-        return self.standardize_df(df)
+        return self.standardize_df_(df)
 
     def fit_transform_norm(self, df: DataFrame) -> DataFrame:
         self.fit(df)
