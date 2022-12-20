@@ -2,6 +2,7 @@ import math
 from typing import List
 
 import time
+from matplotlib import pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -80,6 +81,42 @@ def get_available_cuda_devices(free_mem_threshold: float = 0.90) -> List[str]:
                 
         nvidia_smi.nvmlShutdown()
     return available_gpus
+
+def plot_column(actual_values: pd.DataFrame, predicted_values: pd.DataFrame, column_number: int = 0, rmse_threshold: float = 0.30, is_training: bool = True):
+
+    label_columns = actual_values.columns
+
+    if len(label_columns) <= column_number:
+        print('Out of Prediction Bounds')
+        return
+
+    plt.figure(figsize=(25, 15))  # plotting
+    plt.rcParams.update({'font.size': 22})
+
+    column = label_columns[column_number]
+    pred_column = f"pred_{column}_{'training' if is_training else 'test'}"
+
+    rmse = get_rmse(actual_values[column], predicted_values[column])
+    mae = mean_absolute_error(actual_values[column], predicted_values[column])
+
+    predicted_color = 'green' if rmse < rmse_threshold else 'orange'
+
+    plt.plot(actual_values[column], label=column, color='black')  # actual plot
+    plt.plot(predicted_values[column], label=pred_column, color=predicted_color)  # predicted plot
+
+    plt.title('Time-Series Prediction')
+    plt.plot([], [], ' ', label=f'RMSE: {rmse}')
+    plt.plot([], [], ' ', label=f'MAE: {mae}')
+    plt.legend()
+    plt.ylabel('timeline', fontsize=25)
+    
+    # if INCLUDE_WANDB:
+    #     wandb.log({pred_column: wandb.Image(plt)})
+    #     wandb.summary[f'Root Mean Squared Error ({column})'] = rmse
+    #     wandb.summary[f'Mean Absolute Error ({column})'] = mae
+        
+    plt.show()
+
                 
                 
 if '__main__' == __name__:
