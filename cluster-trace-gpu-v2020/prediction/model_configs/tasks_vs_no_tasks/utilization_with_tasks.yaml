@@ -20,7 +20,7 @@ model:
 
 evaluation_path:
   save_to_file: True
-  loss_progression: "../evaluation/task_vs_no_task/loss_progression_with_tasks.csv"
-  training_prediction_path: "../evaluation/task_vs_no_task/util_lstm_train_with_tasks.csv"
-  test_prediction_path: "../evaluation/task_vs_no_task/util_lstm_test_with_tasks.csv"
+  loss_progression: "evaluation/task_vs_no_task/loss_progression_with_tasks.csv"
+  training_prediction_path: "evaluation/task_vs_no_task/util_lstm_train_with_tasks.csv"
+  test_prediction_path: "evaluation/task_vs_no_task/util_lstm_test_with_tasks.csv"
 
