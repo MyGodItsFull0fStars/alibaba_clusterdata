@@ -7,9 +7,9 @@ dataset:
 model:
   name: "Utilization LSTM Model without Tasks"
   save_model: True
-  num_epochs: 1
+  num_epochs: 100
   learning_rate: 0.0001
-  hidden_size: 6000
+  hidden_size: 6500
   num_layers: 2
 
   scheduler:
@@ -20,9 +20,9 @@ model:
 
 evaluation_path:
   save_to_file: True
-  loss_progression: "../evaluation/task_vs_no_task/loss_progression_no_tasks.csv"
-  training_prediction_path: "../evaluation/task_vs_no_task/util_lstm_train_no_tasks.csv"
-  test_prediction_path: "../evaluation/task_vs_no_task/util_lstm_test_no_tasks.csv"
+  loss_progression: "evaluation/task_vs_no_task/loss_progression_no_tasks.csv"
+  training_prediction_path: "evaluation/task_vs_no_task/util_lstm_train_no_tasks.csv"
+  test_prediction_path: "evaluation/task_vs_no_task/util_lstm_test_no_tasks.csv"
 
 logging:
   enable_wandb: False

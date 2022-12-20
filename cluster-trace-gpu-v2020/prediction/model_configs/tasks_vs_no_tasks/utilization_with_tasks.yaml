@@ -7,9 +7,9 @@ dataset:
 model:
   name: "Utilization LSTM Model with Tasks"
   save_model: True
-  num_epochs: 1
+  num_epochs: 100
   learning_rate: 0.0001
-  hidden_size: 6000
+  hidden_size: 6500
   num_layers: 2
 
   scheduler:
