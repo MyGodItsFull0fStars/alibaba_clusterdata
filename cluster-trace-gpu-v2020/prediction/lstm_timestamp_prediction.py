@@ -197,8 +197,9 @@ for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Los
     validation_loop()
 
 # %%
-# loss_df = pd.DataFrame(data=loss_progression)
-# loss_df.plot.line()
+loss_df = pd.DataFrame(data=loss_progression)
+if yaml_config['evaluation_path']['save_to_file'] == True:
+    loss_df.to_csv(yaml_config['evaluation_path']['loss_progression'])
 
 # %%
 import time
