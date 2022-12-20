@@ -5,9 +5,9 @@ dataset:
   batch_size: 500
 
 model:
-  name: "Utilization LSTM Model without Tasks"
+  name: "Utilization LSTM Model with Tasks"
   save_model: True
-  num_epochs: 100
+  num_epochs: 1
   learning_rate: 0.0001
   hidden_size: 6000
   num_layers: 2
