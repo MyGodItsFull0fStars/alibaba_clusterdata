@@ -159,7 +159,7 @@ def training_loop(train_loader: DataLoader) -> float:
     for _, (inputs, labels) in enumerate(train_loader):
         # send input and label to device
         inputs, labels = inputs.to(device), labels.to(device)
-        
+        print(inputs.shape)
         # forward input to model
         predictions = model(inputs).to(device)
 
