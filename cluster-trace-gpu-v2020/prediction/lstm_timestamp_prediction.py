@@ -290,7 +290,7 @@ def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True
 
 # %%
 print('save combined dfs')
-combined_train_df = get_combined_data_df(dataset)
+combined_train_df = get_combined_data_df(dataset, is_training=True)
 
 # %%
-combined_test_df = get_combined_data_df(test_set)
+combined_test_df = get_combined_data_df(test_set, is_training=False)
