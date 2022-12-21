@@ -25,7 +25,7 @@ from yaml.loader import SafeLoader
 
 # %%
 # Open the file and load the file
-with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
+with open('./model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
     print(yaml_config)
 
@@ -81,8 +81,8 @@ if INCLUDE_WANDB:
 
 # %%
 print('init model')
-# lstm = LSTM(num_classes, input_size, hidden_size, num_layers, seq_length, bidirectional=bidirectional)
-model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
+lstm = LSTM(num_classes, input_size, hidden_size, num_layers)
+# model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 model.train()
 
 # log gradients and model parameters
