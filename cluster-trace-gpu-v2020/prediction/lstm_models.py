@@ -37,6 +37,7 @@ class LSTM(nn.Module):
             input_size=input_size,
             hidden_size=hidden_size,
             bidirectional=self.bidirectional,
+            num_layers=self.num_layers,
             batch_first=True,
         ).to(device)
 
