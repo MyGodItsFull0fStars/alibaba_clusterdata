@@ -17,13 +17,12 @@ device = get_device()
 
 class LSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, seq_length: int, bidirectional: bool = False) -> None:
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, bidirectional: bool = False) -> None:
         super(LSTM, self).__init__()
         self.num_classes: int = num_classes
         self.input_size: int = input_size
         self.hidden_size: int = hidden_size
         self.num_layers: int = num_layers
-        self.seq_length: int = seq_length
 
         self.init_linear = nn.Linear(
             self.input_size, self.input_size).to(device)
@@ -51,7 +50,7 @@ class LSTM(nn.Module):
         # thrid fully connected layer
         self.fc_3 = nn.Linear(256, num_classes).to(device)
         # activation function
-        self.relu = nn.LeakyReLU().to(device)
+        self.relu = nn.ReLU().to(device)
 
     def forward(self, input: torch.Tensor):
         # Propagate input through LSTM
