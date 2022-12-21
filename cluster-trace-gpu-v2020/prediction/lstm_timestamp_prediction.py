@@ -27,7 +27,6 @@ from yaml.loader import SafeLoader
 # Open the file and load the file
 with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
-    print(yaml_config)
 
 # %%
 batch_size: int = yaml_config['dataset']['batch_size']
@@ -53,6 +52,7 @@ num_layers: int = yaml_config['model']['num_layers']
 # number of output classes
 num_classes: int = dataset.y.shape[1]
 
+print(f'input_size: {input_size}, hidden_size: {hidden_size}, num_layers: {num_layers}, num_classes: {num_classes}')
 device = get_device()
 
 INCLUDE_WANDB: bool = False

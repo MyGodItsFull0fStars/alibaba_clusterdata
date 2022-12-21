@@ -24,11 +24,6 @@ class LSTM(nn.Module):
         self.hidden_size: int = hidden_size
         self.num_layers: int = num_layers
 
-        # self.init_linear = nn.Linear(
-        #     self.input_size, self.input_size).to(device)
-        
-        self.device = device
-
         # long-short term memory layer
         self.lstm = nn.LSTM(
             input_size=input_size,
