@@ -24,8 +24,8 @@ class LSTM(nn.Module):
         self.hidden_size: int = hidden_size
         self.num_layers: int = num_layers
 
-        self.init_linear = nn.Linear(
-            self.input_size, self.input_size).to(device)
+        # self.init_linear = nn.Linear(
+        #     self.input_size, self.input_size).to(device)
         
         self.device = device
 
@@ -49,6 +49,7 @@ class LSTM(nn.Module):
         self.relu = nn.ReLU().to(device)
 
     def forward(self, input: torch.Tensor):
+        print(f'input shape: {input.shape}')
         # Propagate input through LSTM
         _, (hn, _) = self.lstm(input, self.get_hidden_internal_state(input))
 
@@ -67,10 +68,8 @@ class LSTM(nn.Module):
         return out
 
     def get_hidden_internal_state(self, input: torch.Tensor):
-        hidden_state = torch.zeros(1, input.size(
-            0), self.hidden_size).requires_grad_().to(device)
-        internal_state = torch.zeros(1, input.size(
-            0), self.hidden_size).requires_grad_().to(device)
+        hidden_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
+        internal_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
 
         return (hidden_state, internal_state)
 
