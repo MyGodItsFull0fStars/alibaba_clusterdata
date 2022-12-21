@@ -17,7 +17,7 @@ device = get_device()
 
 class LSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int, bidirectional: bool = False) -> None:
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int) -> None:
         super(LSTM, self).__init__()
         self.num_classes: int = num_classes
         self.input_size: int = input_size
@@ -26,9 +26,6 @@ class LSTM(nn.Module):
 
         self.init_linear = nn.Linear(
             self.input_size, self.input_size).to(device)
-
-        self.bidirectional = bidirectional
-        self.bidirectional_mult: int = 2 if self.bidirectional else 1
         
         self.device = device
 
@@ -36,7 +33,6 @@ class LSTM(nn.Module):
         self.lstm = nn.LSTM(
             input_size=input_size,
             hidden_size=hidden_size,
-            bidirectional=self.bidirectional,
             num_layers=self.num_layers,
             batch_first=True,
         ).to(device)
@@ -44,8 +40,7 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout(0.4)
 
         # first fully connected layer
-        self.fc_1 = nn.Linear(
-            hidden_size * self.bidirectional_mult, 512).to(device)
+        self.fc_1 = nn.Linear(hidden_size, 512).to(device)
         # second fully connected layer
         self.fc_2 = nn.Linear(512, 256).to(device)
         # thrid fully connected layer
@@ -58,7 +53,7 @@ class LSTM(nn.Module):
         _, (hn, _) = self.lstm(input, self.get_hidden_internal_state(input))
 
         # Reshaping the data for the Dense layer
-        out = hn.view(-1, self.hidden_size * self.bidirectional_mult)
+        out = hn.view(-1, self.hidden_size)
         # out = self.relu(hn[0])
         out = self.fc_1(out)
         # out = self.dropout(out)
@@ -72,9 +67,9 @@ class LSTM(nn.Module):
         return out
 
     def get_hidden_internal_state(self, input: torch.Tensor):
-        hidden_state = torch.zeros(self.bidirectional_mult, input.size(
+        hidden_state = torch.zeros(1, input.size(
             0), self.hidden_size).requires_grad_().to(device)
-        internal_state = torch.zeros(self.bidirectional_mult, input.size(
+        internal_state = torch.zeros(1, input.size(
             0), self.hidden_size).requires_grad_().to(device)
 
         return (hidden_state, internal_state)
