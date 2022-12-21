@@ -63,8 +63,8 @@ class LSTM(nn.Module):
         return out
 
     def get_hidden_internal_state(self, input: torch.Tensor):
-        hidden_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
-        internal_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
+        hidden_state = torch.zeros(2, input.size(0), self.hidden_size).requires_grad_().to(device)
+        internal_state = torch.zeros(2, input.size(0), self.hidden_size).requires_grad_().to(device)
 
         return (hidden_state, internal_state)
 
