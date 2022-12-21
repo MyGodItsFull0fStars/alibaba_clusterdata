@@ -164,9 +164,9 @@ class GPUDataset(Dataset):
             data_index = 'start_date'
         return data_index
 
-    def _resize_df(self, df: pd.DataFrame, split_index: int = 4000) -> pd.DataFrame:
-        if self.small_df:
-            return df.iloc[:split_index]
+    def _resize_df(self, df: pd.DataFrame, df_size: int = 4000) -> pd.DataFrame:
+        if self.small_df and len(df) >= df_size:
+            return df.iloc[:df_size]
         else:
             return df.iloc[:1954000]
 
@@ -338,7 +338,7 @@ class UtilizationDataset(GPUDataset):
 
     def _prepare_data_tensors(self) -> Tuple[Tensor, Tensor]:
         df = self._read_csv()
-        df = self._resize_df(df)
+        df = self._resize_df(df, df_size=20000)
 
         return self._init_data_tensors(df=df)
 
