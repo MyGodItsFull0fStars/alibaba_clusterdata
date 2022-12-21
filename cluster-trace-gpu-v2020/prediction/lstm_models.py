@@ -121,9 +121,9 @@ class UtilizationLSTM(nn.Module):
         cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
-        cpu_output, (cpu_ht, cpu_ct) = self.cpu_lstm(cpu_input,
+        _, (cpu_ht, _) = self.cpu_lstm(cpu_input,
                                        self.get_hidden_internal_state(input))
-        mem_output, (mem_ht, mem_ct) = self.mem_lstm(mem_input,
+        _, (mem_ht, _) = self.mem_lstm(mem_input,
                                        self.get_hidden_internal_state(input))
                
         # Reshaping the data for the Dense layer
@@ -139,7 +139,7 @@ class UtilizationLSTM(nn.Module):
         # Only use the last stacked lstm layer as output
         output = output[(self.num_layers - 1) * input.size(0):]
 
-        return output
+        return torch.abs(output)
 
     def get_hidden_internal_state(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
