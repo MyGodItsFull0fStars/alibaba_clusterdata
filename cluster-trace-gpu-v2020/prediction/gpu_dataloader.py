@@ -178,7 +178,7 @@ class GPUDataset(Dataset):
         y_df = torch.Tensor(y_df)
 
         # Reshape Feature Tensor
-        X_df = torch.reshape(X_df, (X_df.shape[0], 1, X_df.shape[1]))
+        X_df = torch.reshape(X_df, (X_df.shape[0], 2, X_df.shape[1]))
 
         return X_df, y_df
     
