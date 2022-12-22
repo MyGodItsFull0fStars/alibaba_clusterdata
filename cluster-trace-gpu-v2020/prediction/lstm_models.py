@@ -106,6 +106,8 @@ class UtilizationLSTM(nn.Module):
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         cpu_input, mem_input = input, input
+        print('cpu', cpu_input.shape)
+        print('mem', mem_input.shape)
         # cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
@@ -172,11 +174,11 @@ class UtilizationLSTM(nn.Module):
             nn.Linear(hidden_size, 512),
             
             nn.ReLU(),
-            nn.BatchNorm1d(hidden_size // 2),
+            nn.BatchNorm1d(512),
             nn.Linear(512, 128),
             
             nn.ReLU(),
-            nn.BatchNorm1d(hidden_size // 4),
+            nn.BatchNorm1d(128),
             nn.Linear(128, 1),
         ).to(device)
 
