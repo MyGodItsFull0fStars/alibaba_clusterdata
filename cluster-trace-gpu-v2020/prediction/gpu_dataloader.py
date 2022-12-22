@@ -338,7 +338,7 @@ class UtilizationDataset(GPUDataset):
 
     def _prepare_data_tensors(self) -> Tuple[Tensor, Tensor]:
         df = self._read_csv()
-        df = self._resize_df(df, df_size=20000)
+        df = self._resize_df(df, df_size=10000)
 
         return self._init_data_tensors(df=df)
 
