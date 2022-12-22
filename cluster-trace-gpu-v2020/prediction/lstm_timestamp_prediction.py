@@ -191,7 +191,8 @@ batch_size_ranges = get_batch_size_ranges(num_epochs, split_size=4)
 def outer_training_loop():
     print('start training loop')
     loss_val = 100
-    for epoch in (pbar := tqdm(range(0, num_epochs // len(batch_size_ranges)), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
+    for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
+    # for epoch in (pbar := tqdm(range(0, num_epochs // len(batch_size_ranges)), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
 
         # if epoch % modulo_switch == modulo_switch - 1:
         #     reorder_dataset(dataset, batch_size // 2)
