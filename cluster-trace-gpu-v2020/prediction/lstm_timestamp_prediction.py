@@ -186,9 +186,9 @@ loss_progression: list = []
 if torch.has_cuda:
     torch.cuda.empty_cache()
     
+loss_val = 100
 def outer_training_loop():
     print('start training loop')
-    loss_val = None
     for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
 
         # if epoch % modulo_switch == modulo_switch - 1:
