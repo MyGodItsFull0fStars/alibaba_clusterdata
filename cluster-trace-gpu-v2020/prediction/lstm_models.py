@@ -71,18 +71,21 @@ class LSTM(nn.Module):
 
 class UtilizationLSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int = 1, generalization: str = 'batch') -> None:
+    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int = 1, generalization: str = 'batch', lstm_mode: str = 'full') -> None:
         super(UtilizationLSTM, self).__init__()
         self.num_classes: int = num_classes
         self.input_size: int = input_size
         self.hidden_size: int = hidden_size
         self.num_layers = num_layers
-
+        self.lstm_mode = lstm_mode
         self.device = device
+        
+        # if dataset is split, remove two columns not used in the lstm model
+        split_decrement: int = 2 if lstm_mode == 'split' else 0
 
         # long-short term memory layer to predict cpu usage
         self.cpu_lstm = nn.LSTM(
-            input_size=input_size,
+            input_size=input_size - split_decrement,
             hidden_size=hidden_size,
             num_layers=self.num_layers, 
             batch_first=True,
@@ -90,7 +93,7 @@ class UtilizationLSTM(nn.Module):
 
         # long-short term memory layer to predict memory usage
         self.mem_lstm = nn.LSTM(
-            input_size=input_size,
+            input_size=input_size - split_decrement,
             hidden_size=hidden_size,
             num_layers=self.num_layers,
             batch_first=True,
@@ -105,10 +108,10 @@ class UtilizationLSTM(nn.Module):
             self.mem_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        cpu_input, mem_input = input, input
-        print('cpu', cpu_input.shape)
-        print('mem', mem_input.shape)
-        # cpu_input, mem_input = self.split_input(input)
+        if self.lstm_mode == 'full':
+            cpu_input, mem_input = input, input
+        elif self.lstm_mode == 'split':
+            cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
         _, (cpu_ht, _) = self.cpu_lstm(cpu_input,
