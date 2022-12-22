@@ -2,10 +2,9 @@
 print('import libraries')
 from lstm_models import LSTM, UtilizationLSTM
 from gpu_dataloader import ForecastDataset, UtilizationDataset
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
-from sklearn.metrics import mean_absolute_error
 
 from typing import List
 
@@ -18,7 +17,7 @@ from tqdm import tqdm
 from utils import get_device
 
 import numpy as np
-from utils import get_device_as_string, get_device, get_rmse, get_mae
+from utils import get_device_as_string, get_device, get_rmse, get_mae, get_available_cuda_devices
 
 import yaml
 from yaml.loader import SafeLoader
@@ -83,6 +82,8 @@ if INCLUDE_WANDB:
 print('init model')
 # model = LSTM(num_classes, input_size, hidden_size, num_layers)
 model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
+if len(get_available_cuda_devices()) > 1:
+    model = nn.DataParallel(model)
 model.train()
 
 # log gradients and model parameters
