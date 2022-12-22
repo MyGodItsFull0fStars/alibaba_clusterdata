@@ -186,7 +186,7 @@ loss_progression: list = []
 if torch.has_cuda:
     torch.cuda.empty_cache()
     
-batch_size_ranges = get_batch_size_ranges(num_epochs, split_size=2)
+batch_size_ranges = get_batch_size_ranges(num_epochs, split_size=4)
 
 def outer_training_loop():
     print('start training loop')
