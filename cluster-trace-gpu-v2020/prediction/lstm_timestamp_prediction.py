@@ -143,6 +143,7 @@ def reorder_dataset(dataset: ForecastDataset, batch_size: int):
 
 
 # %%
+loss_val = 100
 def inner_training_loop(train_loader: DataLoader) -> float:
     predictions, labels, loss = 0, 0, 0
     for _, (inputs, labels) in enumerate(tqdm(train_loader, leave=False)):
@@ -186,7 +187,6 @@ loss_progression: list = []
 if torch.has_cuda:
     torch.cuda.empty_cache()
     
-loss_val = 100
 def outer_training_loop():
     print('start training loop')
     for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
