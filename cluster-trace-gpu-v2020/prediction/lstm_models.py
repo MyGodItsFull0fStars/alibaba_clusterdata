@@ -105,7 +105,8 @@ class UtilizationLSTM(nn.Module):
             self.mem_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        cpu_input, mem_input = self.split_input(input)
+        cpu_input, mem_input = input, input
+        # cpu_input, mem_input = self.split_input(input)
 
         # Propagate input through LSTM
         _, (cpu_ht, _) = self.cpu_lstm(cpu_input,
@@ -161,6 +162,7 @@ class UtilizationLSTM(nn.Module):
             mem_columns = mem_columns + [x for x in range(4, input.size(dim=2))]
 
         cpu_input, mem_input = input[:, :, cpu_columns], input[:, :, mem_columns]
+        
         return (cpu_input, mem_input)
 
     def init_sequential_layer_batchnorm(self, hidden_size: int) -> nn.Sequential:
