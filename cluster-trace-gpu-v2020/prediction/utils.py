@@ -24,23 +24,23 @@ def get_df(file: str, header=None, sample: bool = False, sample_number: int = 10
 
 def get_device() -> torch.device:
     device_as_string = get_device_as_string()
-    print(device_as_string)
     return torch.device(device_as_string)
 
 
 def get_device_as_string() -> str:
     if torch.cuda.is_available():
-        return 'cuda:1'
-        # cuda_devices = get_available_cuda_devices()
-        # # if more than one gpu are available, use all of them
-        # if len(cuda_devices) > 1:
-        #     if len(cuda_devices) == len(get_available_cuda_devices()):
-        #         return 'cuda'
-        #     else:
-        #         return cuda_devices[0]
-        # else:
-        # # if only one gpu is available, return the cuda id (cuda:0) of it
-        #     return cuda_devices[0]
+    #     return 'cuda'
+        cuda_devices = get_available_cuda_devices()
+        # if more than one gpu are available, use all of them
+        if len(cuda_devices) > 1:
+            if len(cuda_devices) == len(get_available_cuda_devices()):
+                return 'cuda'
+            else:
+                return 'cuda:1'
+                # return cuda_devices[0]
+        else:
+        # if only one gpu is available, return the cuda id (cuda:0) of it
+            return cuda_devices[0]
     # if no gpu available, use cpu instead
     return 'cpu'
 
