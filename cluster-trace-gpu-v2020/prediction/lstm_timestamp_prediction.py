@@ -141,20 +141,9 @@ def reorder_dataset(dataset: ForecastDataset, batch_size: int):
     dataset.X = dataset.X[dataset_order]
     dataset.y = dataset.y[dataset_order]
 
-# %%
-modulo_switch = num_epochs // 10
-print('init train dataloader')
-train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=10)
-
-loss_val = None
-loss_progression: list = []
 
 # %%
-if torch.has_cuda:
-    torch.cuda.empty_cache()
-
-# %%
-def training_loop(train_loader: DataLoader) -> float:
+def inner_training_loop(train_loader: DataLoader) -> float:
     predictions, labels, loss = 0, 0, 0
     for _, (inputs, labels) in enumerate(tqdm(train_loader, leave=False)):
         # send input and label to device
@@ -180,20 +169,43 @@ def validation_loop():
         val_pred = model(test_set.X.to(device))
         val_loss = criterion(val_pred, test_set.y.to(device))
         scheduler.step(val_loss)
+        
+def get_batch_size_ranges(num_epochs: int, split_size: int = 5) -> list:
+    step_size = batch_size // split_size
+    bs_sizes = [x for x in range(step_size, batch_size, step_size)] + [batch_size]
+    
+    return bs_sizes
 
 # %%
-print('start training loop')
-for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
+modulo_switch = num_epochs // 10
+print('init train dataloader')
 
-    # if epoch % modulo_switch == modulo_switch - 1:
-    #     reorder_dataset(dataset, batch_size // 2)
-    #     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=8)
+loss_progression: list = []
+
+# %%
+if torch.has_cuda:
+    torch.cuda.empty_cache()
     
-    loss_val = training_loop(train_loader)
-    loss_progression.append(loss_val)
-    pbar.set_description(f'Training Loop ({epoch + 1}) -- Loss: {loss_val:.5f}')
-    
-    validation_loop()
+def outer_training_loop():
+    print('start training loop')
+    loss_val = None
+    for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
+
+        # if epoch % modulo_switch == modulo_switch - 1:
+        #     reorder_dataset(dataset, batch_size // 2)
+        #     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=8)
+        
+        loss_val = inner_training_loop(train_loader)
+        loss_progression.append(loss_val)
+        pbar.set_description(f'Training Loop ({epoch + 1}) -- Loss: {loss_val:.5f}')
+        
+        validation_loop()
+        
+batch_size_ranges = get_batch_size_ranges(num_epochs, split_size=2)
+
+for bs in batch_size_ranges:
+    train_loader = DataLoader(dataset, batch_size=bs, shuffle=False, num_workers=10)
+    outer_training_loop()
 
 # %%
 loss_df = pd.DataFrame(data=loss_progression)
