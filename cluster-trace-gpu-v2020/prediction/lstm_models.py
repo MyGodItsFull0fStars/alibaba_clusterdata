@@ -133,7 +133,7 @@ class UtilizationLSTM(nn.Module):
         output = output[(self.num_layers - 1) * input.size(0):]
 
         # don't allow negative values
-        output[output < 0] = 0
+        output = torch.abs(output)
         
         return output
         # return torch.abs(output)
