@@ -81,8 +81,8 @@ if INCLUDE_WANDB:
 
 # %%
 print('init model')
-model = LSTM(num_classes, input_size, hidden_size, num_layers)
-# model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
+# model = LSTM(num_classes, input_size, hidden_size, num_layers)
+model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
 model.train()
 
 # log gradients and model parameters
