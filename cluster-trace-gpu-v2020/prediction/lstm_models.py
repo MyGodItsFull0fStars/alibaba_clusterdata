@@ -132,6 +132,9 @@ class UtilizationLSTM(nn.Module):
         # Only use the last stacked lstm layer as output
         output = output[(self.num_layers - 1) * input.size(0):]
 
+        # don't allow negative values
+        output[output < 0] = 0
+        
         return output
         # return torch.abs(output)
         
