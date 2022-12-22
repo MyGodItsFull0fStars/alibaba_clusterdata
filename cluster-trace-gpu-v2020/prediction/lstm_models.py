@@ -63,8 +63,8 @@ class LSTM(nn.Module):
         return out
 
     def get_hidden_internal_state(self, input: torch.Tensor):
-        hidden_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
-        internal_state = torch.zeros(1, input.size(0), self.hidden_size).requires_grad_().to(device)
+        hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
+        internal_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
 
         return (hidden_state, internal_state)
 
@@ -82,7 +82,7 @@ class UtilizationLSTM(nn.Module):
 
         # long-short term memory layer to predict cpu usage
         self.cpu_lstm = nn.LSTM(
-            input_size=input_size - 2,
+            input_size=input_size,
             hidden_size=hidden_size,
             num_layers=self.num_layers, 
             batch_first=True,
@@ -90,19 +90,17 @@ class UtilizationLSTM(nn.Module):
 
         # long-short term memory layer to predict memory usage
         self.mem_lstm = nn.LSTM(
-            input_size=input_size - 2,
+            input_size=input_size,
             hidden_size=hidden_size,
             num_layers=self.num_layers,
             batch_first=True,
         ).to(device)
 
-        
         if generalization == 'dropout':
             self.cpu_lstm_seq = self.init_sequential_layer_dropout(hidden_size)
             self.mem_lstm_seq = self.init_sequential_layer_dropout(hidden_size)
             
-        # if generalization == 'batch':
-        else:
+        elif generalization == 'batch':
             self.cpu_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
             self.mem_lstm_seq = self.init_sequential_layer_batchnorm(hidden_size)
 
@@ -128,8 +126,9 @@ class UtilizationLSTM(nn.Module):
         # Only use the last stacked lstm layer as output
         output = output[(self.num_layers - 1) * input.size(0):]
 
-        return torch.abs(output)
-
+        return output
+        # return torch.abs(output)
+        
     def get_hidden_internal_state(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         hidden_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
         internal_state = torch.zeros(self.num_layers, input.size(0), self.hidden_size).requires_grad_().to(device)
@@ -166,35 +165,33 @@ class UtilizationLSTM(nn.Module):
 
     def init_sequential_layer_batchnorm(self, hidden_size: int) -> nn.Sequential:
         return nn.Sequential(
-            # nn.LeakyReLU(),
-            # nn.BatchNorm1d(hidden_size),
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Linear(hidden_size, 512),
+            
+            nn.ReLU(),
             nn.BatchNorm1d(hidden_size // 2),
-
-            nn.Linear(hidden_size // 2, hidden_size // 4),
-            nn.LeakyReLU(),
+            nn.Linear(512, 128),
+            
+            nn.ReLU(),
             nn.BatchNorm1d(hidden_size // 4),
-
-            nn.Linear(hidden_size // 4, 1), 
-                    
+            nn.Linear(128, 1),
         ).to(device)
 
 
     def init_sequential_layer_dropout(self, hidden_size: int) -> nn.Sequential:
         return nn.Sequential(
-            nn.LeakyReLU(),
+            nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.LeakyReLU(),
+            nn.Linear(hidden_size, 512),
+            
+            nn.ReLU(),
             nn.Dropout(),
-
-            nn.Linear(hidden_size // 2, hidden_size // 4),
-            nn.LeakyReLU(),
+            nn.Linear(512, 128),
+            
+            nn.ReLU(),
             nn.Dropout(),
-
-            nn.Linear(hidden_size // 4, 1), 
-                    
+            nn.Linear(128, 1),
         ).to(device)
 
 if __name__ == '__main__':
