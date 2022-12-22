@@ -156,10 +156,9 @@ if torch.has_cuda:
 # %%
 def training_loop(train_loader: DataLoader) -> float:
     predictions, labels, loss = 0, 0, 0
-    for _, (inputs, labels) in enumerate(train_loader):
+    for _, (inputs, labels) in enumerate(tqdm(train_loader, leave=False)):
         # send input and label to device
         inputs, labels = inputs.to(device), labels.to(device)
-        print(inputs.shape, labels.shape)
         # forward input to model
         predictions = model(inputs).to(device)
 
@@ -184,7 +183,7 @@ def validation_loop():
 
 # %%
 print('start training loop')
-for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}')):
+for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
 
     # if epoch % modulo_switch == modulo_switch - 1:
     #     reorder_dataset(dataset, batch_size // 2)
