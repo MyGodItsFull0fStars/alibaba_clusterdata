@@ -9,7 +9,7 @@ model:
   save_model: True
   num_epochs: 100
   learning_rate: 0.0002
-  hidden_size: 10000
+  hidden_size: 8000
   num_layers: 2
 
   scheduler:
