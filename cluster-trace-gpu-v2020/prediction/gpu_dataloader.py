@@ -12,8 +12,9 @@ from dataframe_scaler import DataFrameScaler
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-TRAINING_DATAPATH: str = 'training_df.csv'
-TEST_DATAPATH: str = 'test_df.csv'
+DATASET_PATH: str = './datasets'
+TRAINING_DATAPATH: str = f'{DATASET_PATH}/training_df.csv'
+TEST_DATAPATH: str = f'{DATASET_PATH}/test_df.csv'
 
 MEAN_KEY: str = 'mean'
 STD_DEV_KEY: str = 'std'
@@ -110,7 +111,6 @@ class GPUDataset(Dataset):
         is_training: bool = True,
         data_index: str = 'start_date',
         batch_size: int = 1000,
-        future_step: int = 10,
         small_df: bool = False
     ) -> None:
         super().__init__()
