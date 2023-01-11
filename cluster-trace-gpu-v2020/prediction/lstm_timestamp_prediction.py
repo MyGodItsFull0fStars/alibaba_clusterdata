@@ -22,6 +22,8 @@ from utils import get_device_as_string, get_device, get_rmse, get_mae, get_avail
 import yaml
 from yaml.loader import SafeLoader
 
+from loss_classes import MSLELoss
+
 # %%
 # Open the file and load the file
 with open('./model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml') as f:
@@ -93,7 +95,8 @@ if INCLUDE_WANDB:
 # %%
 # mean square error for regression
 print('init loss, optimizer and scheduler')
-criterion = nn.MSELoss()
+# criterion = nn.MSELoss()
+criterion = MSLELoss()
 # criterion = RMSELoss()
 criterion = criterion.to(device)
 # optimizer function
