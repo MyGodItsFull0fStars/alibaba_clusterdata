@@ -64,3 +64,4 @@ dependencies:
   - torchaudio
   - torchvision
   - seaborn
+  - pytorch-forecasting
