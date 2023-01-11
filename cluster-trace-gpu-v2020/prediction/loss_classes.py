@@ -38,3 +38,17 @@ class RMSLELoss(nn.Module):
         
     def forward(self, pred, actual):
         return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
+    
+    
+class PenaltyMSELoss(nn.Module):
+    penalty: float
+    
+    def __init__(self, penalty: float = 0.05):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.penalty = penalty
+        
+    def forward(self, pred, actual):
+        under_alloc_indices = pred < actual
+        pred[under_alloc_indices] = pred[under_alloc_indices] - self.penalty
+        return self.mse(pred, actual)
