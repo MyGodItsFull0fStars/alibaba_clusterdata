@@ -22,7 +22,7 @@ from utils import get_device_as_string, get_device, get_rmse, get_mae, get_avail
 import yaml
 from yaml.loader import SafeLoader
 
-from loss_classes import MSLELoss
+from loss_classes import MSLELoss, PenaltyMSELoss
 
 # %%
 # Open the file and load the file
@@ -96,7 +96,7 @@ if INCLUDE_WANDB:
 # mean square error for regression
 print('init loss, optimizer and scheduler')
 # criterion = nn.MSELoss()
-criterion = MSLELoss()
+criterion = PenaltyMSELoss()
 # criterion = RMSELoss()
 criterion = criterion.to(device)
 # optimizer function
