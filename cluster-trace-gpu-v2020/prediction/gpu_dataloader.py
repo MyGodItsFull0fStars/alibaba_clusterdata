@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 DATASET_PATH: str = './datasets'
 TRAINING_DATAPATH: str = f'{DATASET_PATH}/training_df.csv'
-TEST_DATAPATH: str = test_df.csv'
+TEST_DATAPATH: str = f'{DATASET_PATH}/test_df.csv'
 
 MEAN_KEY: str = 'mean'
 STD_DEV_KEY: str = 'std'
