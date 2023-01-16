@@ -258,7 +258,7 @@ class MachineDatasetContainer():
         
         
     def init_machine_dataset(self):
-        machine_df = self.read_csv('df_machine_sorted.csv')
+        machine_df = self.read_csv(f'{DATASET_PATH}/df_machine_sorted.csv')
         
         def get_machine_list() -> list:
             machine_list = list()
@@ -290,7 +290,7 @@ class MachineDatasetContainer():
         
         
     def init_index_arrays(self):
-        index_df = self.read_csv('machine_indices.csv')
+        index_df = self.read_csv(f'{DATASET_PATH}/machine_indices.csv')
         
         index_prefix = 'train' if self.is_training else 'test'
         self.start_index_array = index_df[f'{index_prefix}_start'].values
