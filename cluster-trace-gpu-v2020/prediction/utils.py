@@ -1,5 +1,5 @@
 import math
-from typing import List
+from typing import List, Union
 
 import time
 from matplotlib import pyplot as plt
@@ -21,6 +21,34 @@ def get_df(file: str, header=None, sample: bool = False, sample_number: int = 10
         file.split('.csv')[0])).columns if header is None else header
     return df
 
+def transform_column_to_one_hot_encoding(
+    df: pd.DataFrame, 
+    df_column: Union[str, int]
+    ) -> pd.DataFrame:
+    if type(df_column) == int:
+        df_column = df.columns[df_column] # type: ignore   
+                
+    one_hot_columns = pd.get_dummies(df[df_column])
+    
+    return pd.concat([df.drop(axis=1, labels=[df_column]), one_hot_columns], axis=1)
+
+def merge_one_hot_columns(
+    df: pd.DataFrame, 
+    columns: List[Union[str, int]], 
+    column_name: str, 
+    drop_merged: bool = True
+    ) -> pd.DataFrame:
+    if type(columns[0]) == int:
+        columns = df.columns[columns]
+
+    merged_series: pd.Series = df[columns].agg('sum', axis=1)
+    merged_series.index.name
+    if drop_merged:
+        df = df.drop(columns=columns)
+    
+    df[column_name] = merged_series
+    
+    return df
 
 def get_device() -> torch.device:
     device_as_string = get_device_as_string()
