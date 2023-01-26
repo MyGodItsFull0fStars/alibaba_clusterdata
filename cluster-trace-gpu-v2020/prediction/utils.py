@@ -64,11 +64,13 @@ def get_device_as_string() -> str:
             if len(cuda_devices) == len(get_available_cuda_devices()):
                 return 'cuda'
             else:
-                return 'cuda:1'
+                # return 'cuda:1'
+                cuda_devices = get_available_cuda_devices()
                 # return cuda_devices[0]
-        else:
+        elif len(cuda_devices) == 1:
         # if only one gpu is available, return the cuda id (cuda:0) of it
             return cuda_devices[0]
+        
     # if no gpu available, use cpu instead
     return 'cpu'
 
