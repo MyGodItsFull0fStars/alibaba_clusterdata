@@ -24,6 +24,9 @@ from yaml.loader import SafeLoader
 
 from loss_classes import MSLELoss, PenaltyMSELoss
 
+# manual seed to ensure (partial) reproducibility
+torch.manual_seed(42)
+
 # %%
 # Open the file and load the file
 with open('./model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml') as f:
@@ -84,8 +87,8 @@ if INCLUDE_WANDB:
 print('init model')
 # model = LSTM(num_classes, input_size, hidden_size, num_layers)
 model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
-if len(get_available_cuda_devices()) > 1:
-    model = nn.DataParallel(model)
+# if len(get_available_cuda_devices()) > 1:
+#     model = nn.DataParallel(model)
 model.train()
 
 # log gradients and model parameters
@@ -95,8 +98,8 @@ if INCLUDE_WANDB:
 # %%
 # mean square error for regression
 print('init loss, optimizer and scheduler')
-# criterion = nn.MSELoss()
-criterion = PenaltyMSELoss()
+criterion = nn.MSELoss()
+# criterion = PenaltyMSELoss()
 # criterion = RMSELoss()
 criterion = criterion.to(device)
 # optimizer function
@@ -107,7 +110,6 @@ patience = scheduler_config['patience']
 factor = scheduler_config['factor']
 min_lr = scheduler_config['min_lr']
 eps = scheduler_config['eps']
-
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=patience, factor=factor, min_lr=min_lr, eps=eps)
 
 
@@ -174,7 +176,7 @@ def validation_loop():
         val_loss = criterion(val_pred, test_set.y.to(device))
         scheduler.step(val_loss)
         
-def get_batch_size_ranges(num_epochs: int, split_size: int = 5) -> list:
+def get_batch_size_ranges(split_size: int = 5) -> list:
     step_size = batch_size // split_size
     bs_sizes = [x for x in range(step_size, batch_size, step_size)] + [batch_size]
     
@@ -190,17 +192,13 @@ loss_progression: list = []
 if torch.has_cuda:
     torch.cuda.empty_cache()
     
-batch_size_ranges = get_batch_size_ranges(num_epochs, split_size=2)
+batch_size_ranges = get_batch_size_ranges(split_size=1)
 
 def outer_training_loop():
     print('start training loop')
     loss_val = 100
-    # for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
-    for epoch in (pbar := tqdm(range(0, num_epochs // len(batch_size_ranges)), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
-
-        # if epoch % modulo_switch == modulo_switch - 1:
-        #     reorder_dataset(dataset, batch_size // 2)
-        #     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=8)
+    for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
+    # for epoch in (pbar := tqdm(range(0, num_epochs // len(batch_size_ranges)), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
         
         loss_val = inner_training_loop(train_loader)
         loss_progression.append(loss_val)
@@ -218,16 +216,9 @@ loss_df = pd.DataFrame(data=loss_progression)
 if yaml_config['evaluation_path']['save_to_file'] == True:
     loss_df.to_csv(yaml_config['evaluation_path']['loss_progression'])
 
-# %%
 import time
-
 current_time = time.ctime()
-current_time
 
-# %% [markdown]
-# ## Save the Model to Disk
-
-# %%
 model.eval()
 print('save model')
 if yaml_config['model']['save_model']:
@@ -294,9 +285,7 @@ def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True
     }
     
     combined_df = pd.merge(actual_data_df, prediction_df, left_index=True, right_index=True)
-    # combined_df.rename()
     combined_df[['plan_cpu', 'plan_mem']] = plan_df
-
     combined_df = combined_df.rename(columns=rename_columns_dict)
     
     if yaml_config['evaluation_path']['save_to_file'] and save_to_file:
