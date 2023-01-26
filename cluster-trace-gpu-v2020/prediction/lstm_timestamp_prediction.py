@@ -21,7 +21,7 @@ from yaml.loader import SafeLoader
 torch.manual_seed(42)
 
 # Open the file and load the file
-with open('./model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml') as f:
+with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
 
 batch_size: int = yaml_config['dataset']['batch_size']
