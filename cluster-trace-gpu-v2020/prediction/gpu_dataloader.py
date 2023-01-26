@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import torch
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -47,7 +47,7 @@ class DatasetColumns(object):
         ]
 
     @staticmethod
-    def _get_cpu_utilization_columns() -> List[str]:
+    def get_cpu_utilization_columns() -> List[str]:
         return ['cpu_usage']
 
     @staticmethod
@@ -165,7 +165,7 @@ class GPUDataset(Dataset):
             data_index = 'start_date'
         return data_index
 
-    def _resize_df(self, df: pd.DataFrame, df_size: int = 4000) -> pd.DataFrame:
+    def _resize_df(self, df: pd.DataFrame, df_size: int = 5000) -> pd.DataFrame:
         if self.small_df and len(df) >= df_size:
             return df.iloc[:df_size]
         else:
@@ -304,7 +304,7 @@ class MachineDatasetContainer():
         return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
 
     def get_label_columns(self) -> List[str]:
-        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
+        return DatasetColumns.get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
 
     def read_csv(self, csv_path: str = '') -> pd.DataFrame:
         if len(csv_path) == 0:
@@ -329,19 +329,24 @@ class UtilizationDataset(GPUDataset):
         data_index: str = 'start_date',
         future_step: int = 10,
         small_df: bool = False,
-        include_tasks: bool = False
+        include_tasks: bool = False, 
+        include_instance: bool = False
     ) -> None:
         super(UtilizationDataset, self).__init__(is_training, data_index,
                                                  1000, future_step, small_df)  # type: ignore
-        self.include_tasks = include_tasks
+        self.include_tasks: bool = include_tasks
+        self.include_instance: bool = include_instance
 
         self.X, self.y = self._prepare_data_tensors()
 
     def _prepare_data_tensors(self) -> Tuple[Tensor, Tensor]:
+        # if self.include_instance:
+        #     df = self.data_path = f'{DATASET_PATH}/df_instance.csv'
         df = self._read_csv()
-        df = self._resize_df(df, df_size=10000)
-
+        df = self._resize_df(df)
         return self._init_data_tensors(df=df)
+    
+ 
 
     def _init_data_tensors(self, df: pd.DataFrame) -> Tuple[Tensor, Tensor]:
 
@@ -372,7 +377,8 @@ class UtilizationDataset(GPUDataset):
         return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
 
     def get_label_columns(self) -> List[str]:
-        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
+        # return DatasetColumns.get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
+        return DatasetColumns.get_cpu_utilization_columns() + DatasetColumns.get_max_mem_utilization_column()
         # return self._get_cpu_utilization_columns() + self._get_mem_utilization_columns() + self._get_runtime_column()
 
 
@@ -400,7 +406,7 @@ class ForecastDataset(GPUDataset):
         return self.__append_to_feature_and_label_set(df)
 
     def get_feature_columns(self) -> List[str]:
-        return DatasetColumns._get_cpu_utilization_columns() + DatasetColumns._get_mem_utilization_columns() + DatasetColumns._get_gpu_utilization_columns() + DatasetColumns._get_runtime_column() + DatasetColumns._get_job_columns()
+        return DatasetColumns.get_cpu_utilization_columns() + DatasetColumns._get_mem_utilization_columns() + DatasetColumns._get_gpu_utilization_columns() + DatasetColumns._get_runtime_column() + DatasetColumns._get_job_columns()
 
     def get_label_columns(self) -> List[str]:
         # return ['cpu_usage', 'gpu_wrk_util', 'avg_mem', 'max_mem',
@@ -454,12 +460,12 @@ if __name__ == '__main__':
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
 
-    # test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
+    test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
     
-    cont = MachineDatasetContainer(small_df=True)
-    first_machine = cont.dataset_list[0]
+    # cont = MachineDatasetContainer(small_df=True)
+    # first_machine = cont.dataset_list[0]
     # print(first_machine.X)
     print('fin')
     
