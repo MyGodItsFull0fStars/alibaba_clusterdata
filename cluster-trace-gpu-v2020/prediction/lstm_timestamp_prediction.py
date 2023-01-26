@@ -1,48 +1,37 @@
-# %%
 print('import libraries')
-from lstm_models import LSTM, UtilizationLSTM
-from gpu_dataloader import ForecastDataset, UtilizationDataset
-from torch.utils.data import DataLoader
-import torch.nn as nn
-import torch
-
 from typing import List
 
 # plotting the data
 import matplotlib.pyplot as plt
+import numpy as np
 # used for the dataframes
 import pandas as pd
-from tqdm import tqdm
-
-from utils import get_device
-
-import numpy as np
-from utils import get_device_as_string, get_device, get_rmse, get_mae, get_available_cuda_devices
-
+import torch
+import torch.nn as nn
 import yaml
-from yaml.loader import SafeLoader
-
+from gpu_dataloader import ForecastDataset, UtilizationDataset
 from loss_classes import MSLELoss, PenaltyMSELoss
+from lstm_models import LSTM, UtilizationLSTM
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from utils import get_device, get_device_as_string, get_mae, get_rmse
+from yaml.loader import SafeLoader
 
 # manual seed to ensure (partial) reproducibility
 torch.manual_seed(42)
 
-# %%
 # Open the file and load the file
 with open('./model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml') as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
 
-# %%
 batch_size: int = yaml_config['dataset']['batch_size']
 small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
 
-# %%
 print('load datasets')
 dataset = UtilizationDataset(is_training=True, small_df=small_df, include_tasks=include_tasks)
 test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks)
 
-# %%
 print('init model parameters')
 num_epochs: int = yaml_config['model']['num_epochs']
 learning_rate: float = yaml_config['model']['learning_rate']
@@ -61,7 +50,6 @@ device = get_device()
 
 INCLUDE_WANDB: bool = False
 
-# %%
 if INCLUDE_WANDB == True:
     import wandb
     wandb.init(project=yaml_config['model']['name'])
@@ -73,7 +61,6 @@ if INCLUDE_WANDB == True:
     wandb.config.num_layers = num_layers
     wandb.config.num_classes = num_classes
 
-# %%
 LOSS: str = 'loss'
 RMSE_TRAINING: str = 'root mean squared error (training)'
 MAE_TRAINING: str = 'mean absolute error (training)'
@@ -83,7 +70,6 @@ if INCLUDE_WANDB:
     wandb.define_metric(RMSE_TRAINING, summary='min')
     wandb.define_metric(MAE_TRAINING, summary='min')
 
-# %%
 print('init model')
 # model = LSTM(num_classes, input_size, hidden_size, num_layers)
 model = UtilizationLSTM(num_classes, input_size, hidden_size, num_layers)
@@ -95,7 +81,6 @@ model.train()
 if INCLUDE_WANDB:
     wandb.watch(model)
 
-# %%
 # mean square error for regression
 print('init loss, optimizer and scheduler')
 criterion = nn.MSELoss()
@@ -113,7 +98,6 @@ eps = scheduler_config['eps']
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=patience, factor=factor, min_lr=min_lr, eps=eps)
 
 
-# %%
 def log_training_metrics(predictions, labels, loss):
     # logging to wandb
     if get_device_as_string() == 'cuda' or get_device_as_string() == 'mps':
@@ -131,7 +115,6 @@ def log_training_metrics(predictions, labels, loss):
     }
     wandb.log(log_dict)
 
-# %%
 def reorder_dataset(dataset: ForecastDataset, batch_size: int):
     batch_order = np.array([batch for batch in range(0, len(dataset), batch_size)], dtype=np.int32)
     batch_order = np.random.permutation(batch_order)
@@ -148,7 +131,6 @@ def reorder_dataset(dataset: ForecastDataset, batch_size: int):
     dataset.y = dataset.y[dataset_order]
 
 
-# %%
 def inner_training_loop(train_loader: DataLoader) -> float:
     predictions, labels, loss = 0, 0, 0
     for _, (inputs, labels) in enumerate(tqdm(train_loader, leave=False)):
@@ -169,7 +151,6 @@ def inner_training_loop(train_loader: DataLoader) -> float:
         
     return loss.item()
 
-# %%
 def validation_loop():
     with torch.no_grad():
         val_pred = model(test_set.X.to(device))
@@ -182,13 +163,11 @@ def get_batch_size_ranges(split_size: int = 5) -> list:
     
     return bs_sizes
 
-# %%
 modulo_switch = num_epochs // 10
 print('init train dataloader')
 
 loss_progression: list = []
 
-# %%
 if torch.has_cuda:
     torch.cuda.empty_cache()
     
@@ -211,12 +190,12 @@ for bs in batch_size_ranges:
     train_loader = DataLoader(dataset, batch_size=bs, shuffle=False, num_workers=10)
     outer_training_loop()
 
-# %%
 loss_df = pd.DataFrame(data=loss_progression)
 if yaml_config['evaluation_path']['save_to_file'] == True:
     loss_df.to_csv(yaml_config['evaluation_path']['loss_progression'])
 
 import time
+
 current_time = time.ctime()
 
 model.eval()
@@ -238,7 +217,6 @@ if yaml_config['model']['save_model']:
     )
 
 
-# %%
 def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True, is_training: bool = True) -> pd.DataFrame:
     model.eval()
         
@@ -294,9 +272,6 @@ def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True
         
     return combined_df
 
-# %%
 print('save combined dfs')
 combined_train_df = get_combined_data_df(dataset, is_training=True)
-
-# %%
 combined_test_df = get_combined_data_df(test_set, is_training=False)
