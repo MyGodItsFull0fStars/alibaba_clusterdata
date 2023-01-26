@@ -95,7 +95,13 @@ patience = scheduler_config['patience']
 factor = scheduler_config['factor']
 min_lr = scheduler_config['min_lr']
 eps = scheduler_config['eps']
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=patience, factor=factor, min_lr=min_lr, eps=eps)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, 
+    patience=patience, 
+    factor=factor, 
+    min_lr=min_lr, 
+    eps=eps
+    )
 
 
 def log_training_metrics(predictions, labels, loss):
