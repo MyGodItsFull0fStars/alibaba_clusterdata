@@ -49,7 +49,7 @@ class DatasetColumns(object):
     @staticmethod
     def get_instance_columns() -> List[str]:
         return [
-            f'clust_inst_{i}' for i in range(11)
+            f'inst_clust_{i}' for i in range(11)
         ]
 
     @staticmethod
@@ -351,6 +351,7 @@ class UtilizationDataset(GPUDataset):
         if self.include_instance:
             df = self.data_path = f'{DATASET_PATH}/df_instance.csv'
         df = self._read_csv()
+        print(df.columns)
         df = self._resize_df(df)
         return self._init_data_tensors(df=df)
     
