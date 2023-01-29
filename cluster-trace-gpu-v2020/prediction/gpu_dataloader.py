@@ -170,6 +170,8 @@ class GPUDataset(Dataset):
             return df.iloc[:df_size]
         else:
             return df.iloc[:1954000]
+        
+        
 
     def _transform_dfs_to_tensors(self, X_df, y_df) -> Tuple[torch.Tensor, torch.Tensor]:
         X_df, y_df = X_df.to_numpy(), y_df.to_numpy()
@@ -340,8 +342,8 @@ class UtilizationDataset(GPUDataset):
         self.X, self.y = self._prepare_data_tensors()
 
     def _prepare_data_tensors(self) -> Tuple[Tensor, Tensor]:
-        # if self.include_instance:
-        #     df = self.data_path = f'{DATASET_PATH}/df_instance.csv'
+        if self.include_instance:
+            df = self.data_path = f'{DATASET_PATH}/df_instance.csv'
         df = self._read_csv()
         df = self._resize_df(df)
         return self._init_data_tensors(df=df)
@@ -460,7 +462,7 @@ if __name__ == '__main__':
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
 
-    test_dataset = UtilizationDataset(small_df=True, include_tasks=True)
+    test_dataset = UtilizationDataset(small_df=True, include_tasks=True, include_instance=True)
     # print(test_dataset.__class__.__name__,
     #       test_dataset.X.shape, test_dataset.y.shape)
     
