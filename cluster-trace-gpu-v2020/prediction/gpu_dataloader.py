@@ -363,9 +363,15 @@ class UtilizationDataset(GPUDataset):
         X_df[DatasetColumns.get_cap_cpu_columns()] = X_df[DatasetColumns.get_cap_cpu_columns()]  
         
         y_df = df[self.get_label_columns()]
+        
+        exclude_cols = list()
+        if self.include_tasks:
+            exclude_cols.extend(DatasetColumns._get_job_columns())
+        if self.include_instance:
+            exclude_cols.extend(DatasetColumns.get_instance_columns())
 
-        self.X_scaler = DataFrameScaler(X_df, DatasetColumns._get_job_columns())
-        self.y_scaler = DataFrameScaler(y_df, DatasetColumns._get_job_columns())
+        self.X_scaler = DataFrameScaler(X_df, exclude_cols)
+        self.y_scaler = DataFrameScaler(y_df, exclude_cols)
 
         X_df = self.X_scaler.standardize_df(X_df)
         y_df = self.y_scaler.normalize_df(y_df)
