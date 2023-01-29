@@ -45,6 +45,12 @@ class DatasetColumns(object):
             'TVMTuneMain', 'chief', 'evaluator', 'ps', 'tensorflow', 'worker',
             'xComputeWorker'
         ]
+        
+    @staticmethod
+    def get_instance_columns() -> List[str]:
+        return [
+            f'clust_inst_{i}' for i in range(11)
+        ]
 
     @staticmethod
     def get_cpu_utilization_columns() -> List[str]:
@@ -374,9 +380,15 @@ class UtilizationDataset(GPUDataset):
         return X_tens, y_tens
 
     def get_feature_columns(self) -> List[str]:
+        feature_columns: List[str] = DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
+        
         if self.include_tasks == True:
-            return DatasetColumns._get_plan_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns.get_cap_mem_columns() + DatasetColumns._get_job_columns()
-        return DatasetColumns._get_plan_cpu_columns() + DatasetColumns.get_cap_cpu_columns() + DatasetColumns._get_plan_mem_columns() + DatasetColumns.get_cap_mem_columns()
+            feature_columns.extend(DatasetColumns._get_job_columns())
+            
+        if self.include_instance == True:
+            feature_columns.extend(DatasetColumns.get_instance_columns())
+
+        return feature_columns
 
     def get_label_columns(self) -> List[str]:
         # return DatasetColumns.get_cpu_utilization_columns() + DatasetColumns.get_avg_mem_utilization_column()
