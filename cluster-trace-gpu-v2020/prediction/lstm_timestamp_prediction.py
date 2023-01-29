@@ -34,8 +34,8 @@ include_tasks: bool = yaml_config['dataset']['include_tasks']
 include_instance: bool = yaml_config['dataset']['include_instance']
 
 print('load datasets')
-dataset = UtilizationDataset(is_training=True, small_df=small_df, include_tasks=include_tasks)
-test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks)
+dataset = UtilizationDataset(is_training=True, small_df=small_df, include_tasks=include_tasks, include_instance=include_instance)
+test_set = UtilizationDataset(is_training=False, small_df=small_df, include_tasks=include_tasks, include_instance=include_instance)
 
 print('init model parameters')
 num_epochs: int = yaml_config['model']['num_epochs']
