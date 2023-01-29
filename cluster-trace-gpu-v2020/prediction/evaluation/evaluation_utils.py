@@ -7,8 +7,10 @@ from typing import List
 
 
 def get_over_allocated_series(df: pd.DataFrame, column: int, quantile: float = 0.99) -> pd.Series:
-    series = df.iloc[:, column].dropna()
-    series = series[series >= 1]
+    # series = df.iloc[:, column].dropna()
+    # series = series[series >= 1]
+    df_over_alloc_rows = df.iloc[:, 0] <= df.iloc[:, column]
+    series = df[df_over_alloc_rows][df.columns[column]]
     return get_under_quantile_series(series, quantile)
 
 
@@ -25,6 +27,7 @@ def describe_over_allocated_dataframe(df: pd.DataFrame, columns: List[int], quan
         temp_df[df.columns[col]] = get_over_allocated_series(
             df, col, quantile).describe()
     return temp_df
+
 
 
 def get_under_allocated_series(df: pd.DataFrame, column: int, quantile: float = 0.99) -> pd.Series:

@@ -2,6 +2,7 @@
 dataset:
   small_df: True
   include_tasks: True
+  include_instance: False
   batch_size: 2000
 
 model:

@@ -1,0 +1,26 @@
+---
+dataset:
+  small_df: True
+  include_tasks: True
+  include_instance: True
+  batch_size: 2000
+
+model:
+  name: "Utilization LSTM Model with Instances"
+  save_model: True
+  num_epochs: 100
+  learning_rate: 0.0002
+  hidden_size: 4000
+  num_layers: 2
+
+  scheduler:
+    patience: 50
+    factor: 0.5
+    min_lr: 0.00001
+    eps: 0.000000001
+
+evaluation_path:
+  save_to_file: True
+  loss_progression: "evaluation/instances/loss_progression_with_tasks.csv"
+  training_prediction_path: "evaluation/instances/util_lstm_train_with_tasks.csv"
+  test_prediction_path: "evaluation/instances/util_lstm_test_with_tasks.csv"

@@ -1,0 +1,129 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\usepackage{listings}
+
+ \geometry{
+ a4paper,
+%  total={170mm,257mm},
+%  left=20mm,
+%  top=20mm,
+ }
+ \usepackage{graphicx}
+%  \usepackage{titling}
+
+\title{Project Semester}
+\author{Christian Bauer}
+% \date{November 2022}
+ 
+ \usepackage{fancyhdr}
+ \usepackage{xcolor}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.9}
+\definecolor{backcolour}{rgb}{0.99,0.98,0.99}
+\definecolor{leafgreen}{RGB}{0,200,120}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{leafgreen},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+
+    \maketitle
+
+    \tableofcontents
+    \lstlistoflistings
+    \pagebreak
+
+    \section{Introduction}
+
+    \section{DataCloud}
+
+        \subsection{Overall Architecture}
+        \subsection{ADA-PIPE}
+        \subsection{Required Interfaces for Collaboration}
+
+    \section{REST Server}
+
+        \subsection{Access Point Interface}
+        \subsection{Flask}
+        \label{sec:flask}
+
+            Flask is a Python framework for creating web applications.
+            The main benefit of Flask compared to other web application frameworks for Python like Django is that it is easy and quick to get started, yet scaling up to complex web applications is easily possible.
+
+            In ADA-PIPE, Flask is used to implement and expose the REST server to other components of DataCloud.
+        \subsection{Architecture}
+        \subsection{KeyCloak Authentication}
+
+            KeyCloak is an open source identity and access management tool.
+            DataCloud has decided to use this tool to ensure an authenticated communication between all services as well as its users.
+            In DataCloud, the possibly sensible data requires to be handled in a secure manner, making KeyCloak a feasible tool for user federation and access control. KeyCloak is based on strong standard protocols and provides support for many common communication protocols such as OpenID Connect, OAuth 2.0 and SAML.
+            Another major feature of KeyCloak is that it can be used for many popular programming languages such as Java, JavaScript and in our case Python. The KeyCloak library implementation of each language can be used with every other KeyCloak implementation via REST calls and given the distributed working environment and usage of different programming languages depending on the expertise of each team, KeyCloak is a suitable choice for providing authentication and authorization of users and services.
+
+            In DataCloud, the responsibility of providing authentication tokens is done by a KeyCloak server instance.
+            In order to be able to communicate with other DataCloud microservices, ADA-PIPE first has to retrieve a KeyCloak authentication token from the server instance. This authentication token is similar to a session key often found for web services, and is only valid for a predefined time frame. This authentication token must be sent with every request to other microservices and every microservice inside of DataCloud is required to verify the validity of the sent token.
+
+            In ADA-PIPE, before acquiring the authentication token for our service, an instance of the \emph{KeycloakOpenID} has to be created with the proper credentials, such as \emph{server URL, client id, realm name} and \emph{client secret key}. Since especially the client secret key has to be concealed, a function is used to load the key into memory so that it can not be easily read. This KeycloakOpenID instance is created as is shown in listing \ref{lst:keycloak-open-id}.
+            
+            \lstinputlisting[language=Python, caption=Retrieve KeyCloak OpenID Instance, label=lst:keycloak-open-id]{code_samples/kc_open_id.py}
+            After successfully creating the KeycloakOpenID instance, the authentication token for ADA-PIPE can be retrieved from the KeyCloak server. This is done by providing the username and password that is used for ADA-PIPE to the method \texttt{\_get\_keycloak\_token(...)} that can be seen in listing \ref{lst:get-keycloak-token}. This method uses the KeycloakOpenID to send the provided credentials to the Keycloak server, and if those are valid, then the server sends back the keycloak token.
+            
+            \lstinputlisting[language=Python, caption=Get ADA-PIPE KeyCloak Token, label=lst:get-keycloak-token]{code_samples/kc_get_service_token.py}
+            After the successful request of acquiring a keycloak token, we are able to send this keycloak token with each of our requests to other DataCloud services. This is done to authenticate the messages that are send to other microservices and since each microservice has a unique token that is linked to it, the token is verifiable by a method such as the code in listing \ref{lst:kc-verify-token}, that is used in ADA-PIPE to authenticate incoming messages. This is done by first checking the HTTP status code. If the HTTP status code is \texttt{201 OK}, then the token is valid. Additionally, the response body is checked for the fields \texttt{email\_verified} and \texttt{preferred\_username}. Either of these must be included in the response for the message to be verified by our service. Otherwise we either get a \texttt{4xx} HTTP error status code or reject the message if the required fields are missing in the response.
+
+            \lstinputlisting[language=Python, caption=KeyCloak Token Verification, label=lst:kc-verify-token]{code_samples/kc_token_verification.py}
+
+
+
+        \subsection{Testing the Server}
+        
+    \section{Repository Maintenance}
+        
+        \subsection{Code Review}
+
+            Code review of each collaborator is a healthy process to make sure that each member of the team is aware about the key components of a module.
+            This is ensured by using \emph{Pull Requests} on GitHub, where the project resides. In this, a (squashed) commit is only merged into the development branch after at least one other team member has reviewed the code and deemed it acceptable to be included into the project.
+            This process is done to ensure that coding conventions are kept consistent\footnote{For this project, the Python coding convention PEP8 is used and enforced. See \url{https://peps.python.org/pep-0008/}} with the existing code base, to ensure an overview understanding of the code base of all members and to quickly find code sections that need improvement or could possibly lead to erroneous behavior.
+
+            % And then we found out that Tinky did a big Stinky and we rejoiced. 
+
+
+
+
+        \subsection{Code Refactoring}
+        \subsection{Project Planning}
+        
+        
+    \section{Future Work}
+        % \subsection{Concurrency}
+        \subsection{Extensive Documentation}
+        \subsection{Load Testing}
+        \subsection{Swagger}
+
+
+    % \section{Conclusion}
+
+
+\end{document}
+

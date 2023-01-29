@@ -20,13 +20,18 @@ from yaml.loader import SafeLoader
 # manual seed to ensure (partial) reproducibility
 torch.manual_seed(42)
 
+no_tasks_yaml_path: str = './model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml'
+with_tasks_yaml_path: str = './model_configs/tasks_vs_no_tasks/utilization_with_tasks.yaml'
+instance_yaml_path: str = './model_configs/instances/utilization_with_instances.yaml'
+
 # Open the file and load the file
-with open('./model_configs/tasks_vs_no_tasks/utilization_no_tasks.yaml') as f:
+with open(instance_yaml_path) as f:
     yaml_config = yaml.load(f, Loader=SafeLoader)
 
 batch_size: int = yaml_config['dataset']['batch_size']
 small_df: bool = yaml_config['dataset']['small_df']
 include_tasks: bool = yaml_config['dataset']['include_tasks']
+include_instance: bool = yaml_config['dataset']['include_instance']
 
 print('load datasets')
 dataset = UtilizationDataset(is_training=True, small_df=small_df, include_tasks=include_tasks)
