@@ -1,0 +1,26 @@
+cluster-trace-gpu-v2020/data/df_worker_sensor.csv
+cluster-trace-gpu-v2020/data/df_worker_sensor.header
+cluster-trace-gpu-v2020/prediction/wandb/*
+*.pyc
+.DS_Store
+cluster-trace-gpu-v2020/prediction/figures/*
+cluster-trace-gpu-v2020/prediction/plots/*
+cluster-trace-gpu-v2020/prediction/evaluation/batch_size/*.csv
+cluster-trace-gpu-v2020/prediction/evaluation/task_vs_no_task/*.csv
+cluster-trace-gpu-v2020/prediction/evaluation/batch_size/*.png
+.vscode/settings.json
+cluster-trace-gpu-v2020/prediction/models/*
+
+# latex files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.glsdefs
+*.log
+*.out
+*.synctex.gz
+*.xdv
+*.ist
+
