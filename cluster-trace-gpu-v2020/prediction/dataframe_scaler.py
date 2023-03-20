@@ -13,12 +13,19 @@ MAX_KEY: str = 'max'
 
 # TODO change so a numpy array is returned unless a DataFrame is "asked" by the user
 class DataFrameScaler():
+    df_data_types: dict
+    std_dev_df: DataFrame
+    norm_dev_df: DataFrame
+    scaled_df_columns: list[str]
 
-    def __init__(self, df: DataFrame = None, filter_columns=None) -> None:  # type: ignore
+    def __init__(
+        self, 
+        df: DataFrame = None,   # the Pandas DataFrame to be scaled # type: ignore
+        filter_columns: list[str] = None   # DataFrame columns to ignore # type: ignore        
+        ) -> None:  
 
         self.filter_columns = filter_columns
-        self.df_data_types = None
-
+        self.df_data_types = None # type: ignore
         if df is not None:
             self.fit(df)
 
