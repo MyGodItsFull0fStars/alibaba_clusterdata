@@ -44,7 +44,6 @@ class LSTM(nn.Module):
         self.relu = nn.ReLU().to(device)
 
     def forward(self, input: torch.Tensor):
-        print(f'input shape: {input.shape}')
         # Propagate input through LSTM
         _, (hn, _) = self.lstm(input, self.get_hidden_internal_state(input))
 
@@ -71,9 +70,8 @@ class LSTM(nn.Module):
 
 class UtilizationLSTM(nn.Module):
 
-    def __init__(self, num_classes: int, input_size: int, hidden_size: int, num_layers: int = 1, generalization: str = 'batch', lstm_mode: str = 'full') -> None:
+    def __init__(self, input_size: int, hidden_size: int, num_layers: int = 1, generalization: str = 'batch', lstm_mode: str = 'full') -> None:
         super(UtilizationLSTM, self).__init__()
-        self.num_classes: int = num_classes
         self.input_size: int = input_size
         self.hidden_size: int = hidden_size
         self.num_layers = num_layers
