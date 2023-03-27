@@ -6,7 +6,7 @@ dataset:
   batch_size: 2000
 
 model:
-  name: "Utilization LSTM Model with Instances"
+  name: "Utilization LSTM Model with RMSE Loss Function"
   save_model: True
   num_epochs: 100
   learning_rate: 0.0002
@@ -19,10 +19,10 @@ model:
     min_lr: 0.00001
     eps: 0.000000001
 
-  loss: "MSE"
+  loss: "RMSE"
 
 evaluation_path:
   save_to_file: True
-  loss_progression: "evaluation/all/loss_progression_with_instances.csv"
-  training_prediction_path: "evaluation/all/util_lstm_train_with_instances.csv"
-  test_prediction_path: "evaluation/all/util_lstm_test_with_instances.csv"
+  loss_progression: "evaluation/all/loss_progression_with_rmse_loss.csv"
+  training_prediction_path: "evaluation/all/util_lstm_train_with_rmse_loss.csv"
+  test_prediction_path: "evaluation/all/util_lstm_test_with_rmse_loss.csv"

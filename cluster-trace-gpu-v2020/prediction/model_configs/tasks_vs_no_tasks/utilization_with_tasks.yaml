@@ -19,6 +19,8 @@ model:
     min_lr: 0.00001
     eps: 0.000000001
 
+  loss: "MSE"
+
 evaluation_path:
   save_to_file: True
   loss_progression: "evaluation/task_vs_no_task/loss_progression_with_tasks.csv"
