@@ -1,6 +1,7 @@
 # %%
 from os import walk
 import subprocess
+import parser_arguments
 
 # %%
 model_configuration_path: str = './model_configs'
@@ -17,10 +18,9 @@ for (dir_path, dir_names, file_names) in walk(model_configuration_path):
 
 # %%
 for config in config_files:
-    subprocess.run(['python', 'lstm_timestamp_prediction.py', f'--config={config}', '--dry_run=True'])
+    subprocess.run(['python', 'lstm_timestamp_prediction.py',
+                   f'--config={config}', f'--dry_run={parser_arguments.dry_run}'])
     print(f'finished {config}')
 
 # %%
 print('done')
-
-
