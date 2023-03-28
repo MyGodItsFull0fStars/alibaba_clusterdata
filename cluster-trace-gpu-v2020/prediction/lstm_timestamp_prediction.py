@@ -13,6 +13,7 @@ import torch
 import pandas as pd
 import numpy as np
 from typing import List, Union
+from timeit import default_timer as timer
 print('import libraries')
 
 # manual seed to ensure (partial) reproducibility
@@ -211,12 +212,12 @@ modulo_switch = num_epochs // 10
 print('init train dataloader')
 
 loss_progression: list = []
+training_time_per_epoch = []
 
 if torch.has_cuda:
     torch.cuda.empty_cache()
 
 batch_size_ranges = get_batch_size_ranges(split_size=1)
-
 
 def outer_training_loop():
     print('start training loop')
@@ -224,8 +225,11 @@ def outer_training_loop():
     for epoch in (pbar := tqdm(range(0, num_epochs), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
         # for epoch in (pbar := tqdm(range(0, num_epochs // len(batch_size_ranges)), desc=f'Training Loop (0) -- Loss: {loss_val}', leave=False)):
 
+        start_time = timer()
         loss_val = inner_training_loop(train_loader)
+        end_time = timer()
         loss_progression.append(loss_val)
+        training_time_per_epoch.append(end_time - start_time)
         pbar.set_description(
             f'Training Loop ({epoch + 1}) -- Loss: {loss_val:.5f}')
 
@@ -247,7 +251,7 @@ for bs in batch_size_ranges:
                               shuffle=False, num_workers=10)
     outer_training_loop()
 
-loss_df = pd.DataFrame(data=loss_progression)
+loss_df = pd.DataFrame(data=[loss_progression, training_time_per_epoch], index=['loss per epoch', 'training time per epoch'])
 if yaml_config['evaluation_path']['save_to_file'] == True:
     loss_df.to_csv(yaml_config['evaluation_path']['loss_progression'])
 
