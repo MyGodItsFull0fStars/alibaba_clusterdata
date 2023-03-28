@@ -5,20 +5,15 @@ from utils import get_device, get_device_as_string, get_mae, get_rmse
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from lstm_models import LSTM, UtilizationLSTM
-from loss_classes import MSLELoss, PenaltyMSELoss, RMSELoss
+from loss_classes import PenaltyMSELoss, RMSELoss
 from gpu_dataloader import ForecastDataset, UtilizationDataset
 import yaml
 import torch.nn as nn
 import torch
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from typing import List, Union
 print('import libraries')
-
-# plotting the data
-# used for the dataframes
-
 
 # manual seed to ensure (partial) reproducibility
 torch.manual_seed(42)
@@ -236,8 +231,7 @@ def outer_training_loop():
 
         validation_loop()
 
-
-if parser_arguments.dry_run or True:
+if parser_arguments.dry_run == True:
     print('dry run, no training will be done.')
     mini_train_loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False)
