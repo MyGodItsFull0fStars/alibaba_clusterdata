@@ -260,12 +260,13 @@ current_time = time.ctime()
 model.eval()
 print('save model')
 if yaml_config['model']['save_model']:
-    yaml_model_name: str = yaml_config['model']['name']
-    yaml_model_name = yaml_model_name.replace(' ', '_')
-    yaml_model_name = yaml_model_name.lower()
-    model_name = f'models/{yaml_model_name}--{current_time}'
+    model_name: str = yaml_config['model']['name']
+    model_name = model_name.replace(' ', '_')
+    model_name = model_name.lower()
+    model_path = f'./models/{model_name}--{current_time}.pt'
     torch.save(
         {
+            'name': model_name,
             'epoch': num_epochs,
             'learning_rate': learning_rate,
             'input_size': input_size,
@@ -275,7 +276,7 @@ if yaml_config['model']['save_model']:
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
         },
-        f'{model_name}'
+        f'{model_path}'
     )
 
 
