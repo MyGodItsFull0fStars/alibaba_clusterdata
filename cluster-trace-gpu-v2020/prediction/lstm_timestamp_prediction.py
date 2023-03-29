@@ -31,7 +31,6 @@ else:
 
 # Open the file and load the file
 with open(config_path) as f:
-    print(config_path)
     yaml_config = yaml.load(f, Loader=SafeLoader)
     assert yaml_config is not None
 
@@ -261,7 +260,10 @@ current_time = time.ctime()
 model.eval()
 print('save model')
 if yaml_config['model']['save_model']:
-    model_name = f'models/epochs-{num_epochs}-{current_time}'
+    yaml_model_name: str = yaml_config['model']['name']
+    yaml_model_name = yaml_model_name.replace(' ', '_')
+    yaml_model_name = yaml_model_name.lower()
+    model_name = f'models/{yaml_model_name}--{current_time}'
     torch.save(
         {
             'epoch': num_epochs,
