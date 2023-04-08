@@ -1,4 +1,4 @@
-name: lstm_prediction
+name: lstm
 channels:
   - conda-forge
   - pytorch
