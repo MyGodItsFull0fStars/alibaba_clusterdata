@@ -322,8 +322,8 @@ def get_combined_data_df(data_set: UtilizationDataset, save_to_file: bool = True
         'cpu_usage_x': 'actual cpu usage',
         'cpu_usage_y': 'predicted cpu usage',
         'plan_cpu': 'allocated cpu',
-        'avg_mem_x': 'actual mem usage',
-        'avg_mem_y': 'predicted mem usage',
+        'max_mem_x': 'actual mem usage',
+        'max_mem_y': 'predicted mem usage',
         'plan_mem': 'allocated mem'
     }
 
