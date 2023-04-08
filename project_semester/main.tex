@@ -14,7 +14,7 @@
  \usepackage{graphicx}
 %  \usepackage{titling}
 
-\title{Project Semester - DataCloud}
+\title{Research Project - DataCloud}
 \author{Christian Bauer}
 % \date{November 2022}
  
@@ -58,31 +58,44 @@
     \section{Introduction}
     \label{sec:introduction}
 
-    % why still empty????
+
+        In this introductory section, I will elaborate on the different sections that follow in project semester work.
+        This project has been undertaken as a requirement for the completion of my master's degree.
+        The topic I have chosen to focus on is creating a REST server (see \ref{sec:server}) for the DataCloud (see \ref{sec:datacloud}) research project and more specifically the ADA-PIPE component (see \ref{sec:adaptation-pipe-datacloud}). 
+        The topic has relevance to current trends and issues such as using RESTful services (see \ref{sec:rest-server}) to interact with numerous DataCloud components in a distributed infrastructure. These RESTful services are built based on a predefined API (see \ref{sec:api-server}).
+        The communication between those DataCloud components is required to be handled in a secure manner, for which the tool KeyCloak (see \ref{sec:keycloak-server}) is used. KeyCloak enables the DataCloud components to interact only with authenticated resources or users.
+        Testing the ADA-PIPE REST server is done once by ensuring the availability of the service (see \ref{sec:insomnia-server})  and also the security of the server (see \ref{sec:nmap-server}).
+        To ensure that the REST server is extendable and maintainable, multiple code quality measures (see \ref{sec:code-quality}) are being considered.
+        Finally, future work is mentioned that is not included in the current state of the project (see \ref{sec:future-work}).
 
     \section{DataCloud}
     \label{sec:datacloud}
 
-    % todo write interlude that leads to the quote
+        Nowadays, the amount of data that is generated and collected is bigger than ever before.
+        Big Data leads to new challenges involving processing and managing this massive amount of information and turning it into valuable insights.
+        The DataCloud toolbox offers a comprehensible solution for discovering, simulating, deploying and adapting Big Data pipelines.
+        The toolbox is designed to also be executed on infrastructures with heterogeneous and untrusted resources.
 
 
         \begin{quote}
             DataCloud delivers a toolbox of new languages, methods, infrastructures, and prototypes for discovering, simulating, deploying, and adapting Big Data pipelines on heterogeneous and untrusted resources. DataCloud separates the design from the run-time aspects of Big Data pipeline deployment, empowering domain experts to take an active part in their definitions \cite{dumitruProjectProjectDataCloud}.
         \end{quote}
+        The separation of the design from the run-time aspects of deployment, DataCloud empowers its users to create efficient and effective Big Data solutions.
+        The architecture of DataCloud is shown in figure \ref{fig:datacloud-toolbox-overview}.
 
-        \subsection{DataCloud Architecture}
+        \begin{figure}[h!]
+            \centering
+            \includegraphics[width=0.95\textwidth]{figures/datacloud_toolbox.png}
+            \caption{DataCloud Toolbox Overview \cite{dumitruDataCloudToolbox}}
+            \label{fig:datacloud-toolbox-overview}
+        \end{figure}
+
+
+        \subsection{DataCloud Pipeline Components}
         \label{sec:architecture-datacloud}
 
-        % todo, write small interlude
-
-            The overall architecture is shown in figure \ref{fig:datacloud-toolbox-overview}.
-
-            \begin{figure}[h!]
-                \centering
-                \includegraphics[width=0.95\textwidth]{figures/datacloud_toolbox.png}
-                \caption{DataCloud Toolbox Overview \cite{dumitruDataCloudToolbox}}
-                \label{fig:datacloud-toolbox-overview}
-            \end{figure}
+            The following sections describe the different DataCloud components that are part of the toolbox.
+            Each of the components is also seen in figure \ref{fig:datacloud-toolbox-overview}.
             
             \subsubsection*{DIS-PIPE}
             \label{sec:discover-pipe-datacloud}
@@ -92,7 +105,7 @@
             \subsubsection*{DEF-PIPE}
             \label{sec:definition-pipe-datacloud}
 
-                DEF-PIPE (Definition pipeline) \cite{mitrovicDEFPIPEFrontend2022} uses domain-specific language (DSL)\footnote{https://www.jetbrains.com/mps/concepts/domain-specific-languages/} to provide a visual design for the implementation of Big Data pipelines.
+                DEF-PIPE (Definition pipeline) \cite{mitrovicDEFPIPEFrontend2022} uses domain-specific language (DSL) \cite{jetbrainsWhatAreDomainSpecific} to provide a visual design for the implementation of Big Data pipelines.
                 This includes support for storing and loading the pipeline definitions and displaying them in a UI. For this, the pipeline structure is declared by domain experts.
                 Furthermore, it is designed to allow Data Scientists to define the content by providing the configuration of each pipeline step.
 
@@ -164,8 +177,6 @@
 
         This section describes the used third-party tools and concepts used to implement the server of \nameref{sec:adaptation-pipe-datacloud}.
         It was agreed upon by all developers to use \nameref{sec:rest-server} for the communication between the different pipeline components of DataCloud with specific interfaces (see \ref{sec:api-server}) to send messages.
-
-    % todo describe what will be mentioned in this section
 
         \subsection{REST}
         \label{sec:rest-server}
@@ -245,7 +256,8 @@
         \subsection{Testing the Server}
         \label{sec:testing-the-server}
 
-        % todo either merge with subsubsection or find another testing method
+            In this section, two approaches for testing the REST server are described.
+            First, the REST functionality of the server is tested with the tool \nameref{sec:insomnia-server}. Next, the overall network functionality and security are tested with the tool \nameref{sec:nmap-server}.
 
             \subsubsection*{Insomnia}
             \label{sec:insomnia-server}
@@ -254,8 +266,12 @@
                 Insomnia is a popular cross-platform REST (Representational State Transfer) client for testing and debugging REST APIs. It allows developers to easily send HTTP requests and view responses, making it an indispensable tool for working with RESTful APIs. Some of the key features of Insomnia include support for multiple request methods (such as GET, POST, PUT, etc.). Insomnia also provides real-time request and response previews, as well as the ability to validate and format JSON data.
                 As is already stated, Insomnia stores the requests and is also capable of validating JSON data, and we used this functionality to test the responses of the server for correctness.
 
-                % todo mention unit tests of insomnia
-                   
+                Insomnia additionally provides functionality to unit test \cite{konginc.UnitTestingInsomnia} a REST application. These unit tests are used to test if the REST server responds with the expected message and values.
+
+                \lstinputlisting[language=Java, caption=Insomnia Unit Test Example, label=lst:insomnia-unit-tests]{code_samples/insomnia_unit.js}
+                In listing \ref{lst:insomnia-unit-tests}, an example unit test can be seen, that waits for a response from a REST server (line 1). Next, the JSON payload body is parsed (line 2) and an item value is extracted (line 3).
+                These values are then tested for the expected data types in lines 5-7.
+                                   
 
             \subsubsection*{Nmap}
             \label{sec:nmap-server}
@@ -265,12 +281,10 @@
                 \begin{quote}
                     Nmap uses raw IP packets in novel ways to determine what hosts are available on the network, what services (application name and version) those hosts are offering, what operating systems (and OS versions) they are running, what type of packet filters/firewalls are in use, ... \cite{NmapNetworkMapper}
                 \end{quote}
-
                 In ADA-PIPE we use Nmap to test if the network component that provides our REST services (see section \ref{sec:rest-server}) is reachable and also only exposes the necessary ports to do so. Nmap also proves a service to run scripts that look for common vulnerabilities. If a possible vulnerability is found by a script, it gets listed with the corresponding CVE number.
                 A found vulnerability in the system was found (see listing \ref{lst:nmap-output}) by Nmap using the command: \texttt{\$ sudo nmap -sV -script=vuln <ip\_number>}. To enable the scripts that look for vulnerabilities, the flag \texttt{-script=vuln} needs to be included. 
                 As stated in the Nmap report, the port number \texttt{8011} is vulnerable to a \emph{directory traversal} attack in the \emph{phpMyAdmin} \cite{phpmyadminBringingMySQLWeb} service. The details of the vulnerability can be found with its identifier \texttt{CVE-2005-3299} and also by the references provided by the script.
                 
-
                 \lstinputlisting[language=Bash, caption=Nmap Vulnerability Output Example, label=lst:nmap-output]{code_samples/nmap_output.bash}
 
             % And then we found out that Tinky did a big Stinky and we rejoiced.             
@@ -278,7 +292,8 @@
     \section{Monitoring}
     \label{sec:monitoring}
 
-    % todo shortly provide an overview here
+        In this section, the approach and tools used to monitor the system are described.
+        First, the monitoring tool \nameref{sec:netdata-monitoring} is described that is used to monitor the computing resources of the infrastructure. Next, the tool \nameref{sec:prometheus-monitoring} is mentioned, which is used to scrape monitoring data of all resources that have Netdata installed.
             
         \subsection{Netdata}
         \label{sec:netdata-monitoring}
@@ -309,7 +324,7 @@
     \section{Project Planning}
     \label{sec:project-planning}
 
-        The internal project planning was done with Skype Business\footnote{https://www.skype.com} and Trello\footnote{https://trello.com}.
+        The internal project planning was done with Skype Business \cite{microsoftSkypeStayConnected} and Trello \cite{atlassianManageYourTeam}.
         Skype is used as a video communication tool to discuss the current progress of the project and the future steps to take.
         Trello is a project management tool that uses boards and cards to organize tasks among all members.
         We organized our Trello board similar to a Kanban board and assigned the tasks according to the previous discussions on Skype.
@@ -353,9 +368,9 @@
 
         Code refactoring of pre-existing code was necessary in order to be able to use the components with other modules of the project.
         The reason for this is that many functionalities were written in Python scripts that were not written to be included with other modules at that stage.
-        % \begin{quote}
-        %     Code refactoring is defined as the process of restructuring computer code without changing or adding to its external behavior and functionality. 
-        % \end{quote}
+        \begin{quote}
+            Code refactoring is defined as the process of restructuring computer code without changing or adding to its external behavior and functionality \cite{wattsWhatCodeRefactoring2018}.
+        \end{quote}
         Therefore, the functionality of the scripts was analysed and then put in separate methods.
         Hardcoded sections of the scripts were put into variables or abstracted were possible. 
         Since most of the hardcoded sections were specific file paths that were manually changed depending on which functionality was tested, those hardcoded sections were exported to configuration YAML files to be able to add further configuration files to the project.
@@ -383,25 +398,27 @@
     \section{Future Work}
     \label{sec:future-work}
 
-    % todo add short overview of future work
+        In this section, the future work of sections mentioned that are planned to be done in the ADA-PIPE project but were not done thus far, or only to some degree.
 
-        % \subsection{Concurrency}
         \subsection{Extensive Documentation}
+
             Documentation is available to some extent in the current version of the project, yet lacks documentation for many sections, such as an overview of the overall system, and the installation guide for new users.
             For this, we will use GitHub wiki functionality that enables us to provide documentation for the project next to the GitHub repository.
             
         \subsection{Swagger}
-            % chatGPT
-            Swagger is an open-source software framework used for designing, building, and documenting RESTful APIs. It provides a way for developers to describe the structure of their APIs, including the inputs and outputs, and to generate interactive documentation and client libraries in different programming languages. Swagger allows for the creation of APIs that are easily readable and accessible, making it easier for developers to understand how to interact with an API. The Swagger framework also provides tools for testing and validating APIs, allowing developers to quickly identify and fix any issues. The use of Swagger has become a standard for documenting and describing RESTful APIs, making it easier for developers to build and consume these APIs.
+             
+            Swagger is an open-source software framework used for designing, building, and documenting RESTful APIs.
+            It provides functionality to describe the structure of APIs, including the inputs and outputs. Additionally, it generates interactive documentation and enables APIs to be more readable and accessible, making it easier to understand how to interact with an API.
+            The use of Swagger has become a standard for documenting and describing RESTful APIs, making it easier for developers to build and consume these APIs.
             While Swagger is already in use, it only covers parts of the REST API and project.
-
-
-
+            It is planned to further increase the usage of Swagger to document the API endpoints.
+        
         \subsection{Server Load Testing}
 
-    % chatGPT
-        Server load testing is the process of evaluating the performance of a server under a simulated heavy load. This involves simulating a high number of users or requests to the server to see how it performs under stress. The purpose of server load testing is to identify any performance bottlenecks or limitations before the server is deployed in a production environment so that any necessary improvements can be made to ensure that the server can handle the expected traffic and load. The results of server load testing can be used to optimize the server's configuration, identify and fix any scalability issues, and improve the overall performance of the server.
-
+            Server load testing is the process of evaluating the performance of a server under a simulated heavy load.
+            This simulation involves a high number of users or requests to the server so the performance under stress can be analysed.
+            Server load testing has the purpose of identifying performance bottlenecks or limitations before deploying the server to a production environment.
+            The results of server load testing can be used to optimize the server's configuration, identify and fix any scalability issues, and improve the overall performance of the server.
 
     \bibliographystyle{ieeetr}
     \bibliography{references}
