@@ -2,8 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from os import walk
 
 from typing import List
+
+def get_all_files_in_path(path: str, file_extension: str = '') -> list[str]:
+    all_files: list[str] = list()
+    for (dir_path, _, file_names) in walk(path):
+        file_names = [f'{dir_path}/{file}' for file in file_names if file.endswith(file_extension)]
+        all_files.extend(file_names)
+        
+    return all_files
 
 
 def get_over_allocated_series(df: pd.DataFrame, column: int, quantile: float = 0.99) -> pd.Series:

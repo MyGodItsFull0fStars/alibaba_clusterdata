@@ -75,19 +75,47 @@ def get_device_as_string() -> str:
     return 'cpu'
 
 
-def get_rmse(actual_values, predicted_values) -> float:
-    '''returns the root mean squared error'''
-    return math.sqrt(mean_squared_error(actual_values, predicted_values))
-
-
 def get_mape(actual_values, predicted_values):
     '''returns the mean absolute percentage error'''
     return np.mean(np.abs(actual_values - predicted_values) / np.abs(actual_values) * 100)
 
 
-def get_mae(actual_values, predicted_values) -> float:
-    '''returns the mean absolute error'''
-    return mean_absolute_error(actual_values, predicted_values)
+def get_mse(actual: pd.Series, predicted: pd.Series) -> float:
+    return np.square(np.subtract(actual, predicted)).mean()
+
+
+def get_rmse(actual: pd.Series, predicted: pd.Series) -> float:
+    return np.sqrt(get_mse(actual, predicted))
+
+
+def mean_absolute_percentage_error(actual: pd.Series, predicted: pd.Series) -> float:
+    def percentage_error(actual: np.ndarray, predicted: np.ndarray) -> np.ndarray:
+        res = np.empty(actual.shape)
+        for j in range(actual.shape[0]):
+            if actual[j] != 0:
+                res[j] = (actual[j] - predicted[j]) / actual[j]
+            else:
+                res[j] = predicted[j] / np.mean(actual)
+        return res
+    return np.mean(np.abs(percentage_error(np.asarray(actual), np.asarray(predicted)))) * 100
+
+
+def symmetric_mean_absolute_percentage_error(actual: pd.Series, predicted: pd.Series) -> float:
+    def percentage_error(actual: np.ndarray, predicted: np.ndarray) -> np.ndarray:
+        result = np.empty(actual.shape)
+        for idx in range(actual.shape[0]):
+            a, p = actual[idx], predicted[idx]
+            if a != 0:
+                result[idx] = (a - p) / ((a + p) / 2)
+            else:
+                result[idx] = p / np.mean(actual)
+        return result
+    return np.mean(np.abs(percentage_error(np.asarray(actual), np.asarray(predicted)))) * 100
+
+
+# def get_mae(actual_values, predicted_values) -> float:
+#     '''returns the mean absolute error'''
+#     return mean_absolute_error(actual_values, predicted_values)
 
 
 def get_available_cuda_devices(free_mem_threshold: float = 0.90) -> List[str]:
