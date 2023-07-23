@@ -40,7 +40,7 @@ This section briefly describes the different datasets used in this repository.
 
 The dataset `preprocessed_worker_new.csv` is sorted by timestamp (index `start_time`), meaning tasks are sorted by arrival time on the GPU servers, regardless of which machine they will be sent to. If two tasks arrive at the same time, the tasks will be sorted by the `machine` column in the dataset.
 
-This dataset is used in the Jupyter notebook `lstm_timestamp_prediction.ipynb` and the approach is further described in section **Timestamp Prediction**. 
+This dataset is used in the Jupyter notebook `lstm_timestamp_prediction.ipynb` and the approach is further described in section **Timestamp Prediction**.
 
 ### Machine Sorted Datasets
 
@@ -48,7 +48,17 @@ This dataset is used in the Jupyter notebook `lstm_timestamp_prediction.ipynb` a
 
 ## How to use
 
-### Timestamp Prediction {timestamp prediction}
-
+### Timestamp Prediction
 
 ### Machine Prediction
+
+
+## Resource Wastage Calculation
+
+$$
+p := \{ x \mid i \in \mathbb{N} \land x_i \in pred \land y_i \in actual, x_i \geq y_i \}
+$$
+
+$$
+\text{wastage}(pred, alloc) := 1 - \left( \frac{pred_{mean}}{alloc_{mean}} \right)
+$$

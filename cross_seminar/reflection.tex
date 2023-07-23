@@ -1,0 +1,101 @@
+\section{Reflection and Experience}
+\label{sec:reflection}
+
+    This section contains the reflections and experiences gathered throughout the project.
+    They are split into technical, organisational and personal as best as possible, though they might intersect to some degree.
+
+    \subsection{Technical}
+    
+        \subsubsection{FastAPI instead of Flask}
+        \label{par:fast-api-instead-of-flask-nih}
+
+            Because I had previous experience with \emph{Python Flask} I chose to use that framework to implement the API endpoints for the REST server.
+            A major benefit I thought Flask had over competitors such as Django is its lightweight dependencies and size. 
+            The desire to build a REST server as small as possible with no extra \emph{bloat} kept me from looking elsewhere for solutions.
+            While the result turned out fine, while implementing the server I quickly saw the shortcomings of using a framework that does not add any (or few) functionalities not defined by the developer.
+            A problem that soon took some time to solve was that I had to generate a JSON to Python (and vice versa) parser for each API endpoint, simply because we consumed messages as JSON but worked with Python objects internally. And each change in the API object structure did take up additional time to keep the server functional.
+            Another feature that was requested at approximately three-quarters of the project duration was to enable \emph{Swagger} \cite{swaggerAPIDocumentationDesign} documentation to the API endpoints.
+            Given the more complex nature of the server and the cooperation with other teams, the \emph{minimalism} of Flask slowed the development of features down, since every addition had to be done with some extra steps.
+
+            I then encountered the framework \emph{FastAPI} \cite{FastAPI} during my spare time by watching YouTube videos. 
+            I quickly realised that the problems that were encountered with Flask already had clever solutions in FastAPI.
+            The conversion from JSON to Python would have been done automatically by providing a Python class template that defines all fields that are expected by an API endpoint. This also would have omitted error-prone parsing and conversion of fields.
+            Similarly, the conversion from Python classes to JSON is also done automatically by FastAPI.
+            Also, Swagger documentation is automatically done by FastAPI for each API endpoint based on the defined Python classes, 
+            so there is the benefit of having clean Python classes, that are used to convert from and to JSON and also create Swagger documentation automatically.
+            On top of not having to worry about those things since they are provided out of the box, FastAPI does have many features that enable developers to develop features for a server fast and securely and cleanly.
+            At least that's what the YouTube video made FastAPI seem to be, the right tool for the job.
+            
+    \subsubsection{Python is Object-Oriented but with Extra Steps}
+    \label{sec:python-is-oo}
+
+        The programming language Python was mainly used for this project and whenever it seemed beneficial, an object-oriented approach was used.
+        This includes using libraries such as \texttt{dataclass} that provide a decorator for Python classes, and with it, adds functionality such as automatically creating a constructor. This approach has the advantage of making data classes smaller in size, therefore making them more readable as well.
+        Python data classes strongly rely on \emph{type hinting}, therefore the type of a class variable has to be declared. 
+        While it is not possible to ensure the type in Python, it still has the advantage of providing information regarding the expected data type and many \emph{linters} exist that do type checking and warn about using the wrong data type.
+    
+    \subsection{Organisational}
+
+        \subsubsection{Priorities, Priorities, Priorities}
+
+            Setting the right priorities isn't easy.
+            Even harder is to extract which tasks do have a higher priority based on meetings and communicating with colleagues.
+            This resulted in a colleague mentioning a task that needs to be completed but had no urgency at the stage of the project, which I then started working on.
+            This task did consume about a working week and given the supposed urgency of it, other tasks could not be finished in time.
+            Only then it became apparent that there was a miscommunication happening and the task did not have any urgency at all.
+
+            This did result in me adapting my communication style and directly asking how urgent a mentioned task is, and if I have to complete two competing tasks, which has the higher priority.
+            Doing so also has the benefit of discussing the benefits of completing which tasks first based on the needs of colleagues as well, giving oneself a clearer picture of the responsibilities and tasks of other colleagues, since they often mention why some tasks are required to be completed earlier.
+
+        \subsubsection{Have fixed Meeting Time Windows}
+        \label{sec:have-fixed-meeting-times}
+
+            In some open-ended meetings, there is a stage where no additional insights will be gained by continuing it. Therefore it is beneficial to have fixed time windows for meetings that will not, or only slightly be extended.
+            In a company I worked at, there was also a person moderating the conversation, which have the benefit of staying on topic and ending meetings that did not produce further insights. Of course, having a meeting moderator is not possible in most meetings, and communicating that the meeting served its purpose and should be discontinued requires some tact since it might get misunderstood as being rude.
+    
+    \subsection{Personal}
+
+        \subsubsection{Not Invented Here (NIH) Syndrome}
+        \label{sec:nih-technical-reflection}
+
+            Various online sources describe the \emph{Not Invented Here (NIH)} syndrome. But it would be against the syndrome itself to use them instead of explaining it myself.
+            The NIH syndrome describes the tendency to refuse the usage, buying etc, of products and tools from external sources. 
+            In development, this refers to the belief that building the functionality is inherently better suited and faster to implement for the project than the already existing tools.
+            
+            In this project, I fell for this belief when searching for a solution for monitoring the distributed resources used for the computation of tasks.
+            The idea was to implement a monitoring client that tracks the resource and sends only the required amount of information to the REST server. 
+            The major benefit of this approach was the very low message size that had to be sent to the server, which in the case of hundreds of resources will make a huge difference.
+            While implementing the client, it became apparent that developing the monitoring tool would require plenty more time to be completed only to have the same functionality that other monitoring tools already provide.
+            But this did not even take error handling and exceptions into account, which are likely to occur in a heterogeneous and large-scale system.
+            And in the case of this project, not focusing more time on the monitoring part and relying on proven tools did allow me to progress in other directions.
+            
+
+        \subsubsection{Less Is More}
+
+            While implementing the features for the REST server I often found myself implementing methods and functionality that I \emph{might} use in the future. 
+            This resulted in a scattering of unused methods and functionality over multiple files and classes just to have that \emph{better-be-save} feature, which for almost all cases did turn out to not be used once.
+            Most of those functions did not take up much of my time to implement, yet continuing this behaviour of course does add up over time.
+            Another problem that started to evolve with adding more and more of those methods was that the files and their contents naturally became larger, which led to taking longer times to comprehend the contents of a file and sometimes even to the question \emph{"Why does this function exist?"}.
+
+            Having to encounter functions that were not even used once over and over again has led to the discovery that \emph{better be safe than sorry} is not always applicable.
+            Now I try to think twice about if I will actually use a method before implementing it, and force myself to (almost) only add methods when I refactor code segments once their functionality is clear.
+
+        \subsubsection{It has to be Good, not Perfect}
+            
+            In general, I tend to do more work than was necessary to complete a task, always trying to do it perfectly.
+            This is apparent in the above sections of this chapter.
+            Perfectionism in my opinion does have its time and place, but in this project, it sometimes was misplaced when focusing on parts that were not that important, hence did not have a high priority.
+            Throughout this project, I gradually did force myself to apply the $80:20$ rule, making sure the required functionality is provided and only then when necessary reworked some parts in order to improve the usability.
+
+        \subsubsection{It Turned Out Fine}
+
+            One very positive reflection section was kept as a final note.
+            I was worried about having to implement a REST server for multiple independent companies/services and how it will turn out and reflect on my abilities. 
+            The other people involved do have more experience either in software development or research than me, so it was \emph{natural} for me to feel the need to show that I am also capable to further the progress of the project and not hinder it by inexperience.
+            This is one of the reasons why the above-mentioned experiences and issues did manifest more than they did for smaller projects done for University courses.
+
+            After finalising my part of the project and looking back I was able to provide good insights in some stages regarding secure communication and later implementation of a working REST server. 
+            While I now would have used other frameworks and tools for some parts, it did turn out fine.
+            And wanting to improve on a part previously thought to be a good solution also shows that some lessons were learned during the project.
+
+        % \subsubsection{}

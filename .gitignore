@@ -22,5 +22,11 @@ cluster-trace-gpu-v2020/prediction/models/*
 *.out
 *.synctex.gz
 *.xdv
+*.lol
+*.toc
 *.ist
 
+*.csv
+cluster-trace-gpu-v2020/prediction/evaluation/all/*.csv
+cluster-trace-gpu-v2020/prediction/evaluation/instances/*.csv
+*.png

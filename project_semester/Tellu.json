@@ -1,0 +1,1 @@
+{"chunkName": "TelluUseCase", "pipelineName": "TelluPipeline", "pipelineType": "streaming", "terminationCheck": {"httpURL": "localhost/api/v1/success"}, "stepsList": [{"name": "dcgenerate", $
